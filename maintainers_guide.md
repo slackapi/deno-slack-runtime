@@ -13,7 +13,9 @@ this project. If you use this package within your own software as is but don't p
 
 ### Testing
 
-> How do you run the tests?
+    deno lint ./src
+    deno fmt ./src
+    deno test --allow-read --allow-env --coverage=.coverage && deno coverage --exclude="fixtures|test" .coverage
 
 ### Generating Documentation (optional)
 
