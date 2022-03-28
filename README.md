@@ -23,6 +23,14 @@ TODO: once we figure out distribution for this repo, the below needs to be updat
 
 This library assumes that function code exists in a `./functions/` relative to the root of your Hermes project.
 
+## CLI
+
+You can also invoke this library directly from the command line, similarly to the above `slack.json` hook implementation:
+
+    deno run --unstable --allow-write --allow-read --allow-net ./path/to/deno-slack-runtime/src/mod.ts [optional-project-root]
+
+The `mod.ts` entry point for this library accepts an optional absolute or relative path argument pointing to the Hermes project root. If no such path argument is provided, the current working directory is assumed to be a Hermes project.
+
 ## Usage details
 
 Once installed, you should be able to use the `slack` (or `hermes`) CLI to run your project locally via `slack run`.
@@ -33,7 +41,7 @@ Linting, formatting and test execution can be run (and a coverage report output)
 
     deno lint ./src
     deno fmt ./src
-    deno test --allow-read --allow-env --coverage=.coverage && deno coverage --exclude="fixtures|test" .coverage
+    deno test --allow-read --coverage=.coverage && deno coverage --exclude="fixtures|test" .coverage
 
 # Authors
 

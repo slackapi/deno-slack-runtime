@@ -6,8 +6,9 @@ import { LoadFunctionModule } from "../load-function-module.ts";
 import { generatePayload } from "./test_utils.ts";
 
 Deno.test("LoadFunctionModule function", async (t) => {
+  const origDir = Deno.cwd();
   const __dirname = new URL(".", import.meta.url).pathname;
-  Deno.env.set("LAMBDA_TASK_ROOT", `${__dirname}fixtures`);
+  Deno.chdir(`${__dirname}/fixtures`);
 
   await t.step("should load typescript file if exists", async () => {
     const tsModule = await LoadFunctionModule(generatePayload("funky"));
@@ -31,5 +32,5 @@ Deno.test("LoadFunctionModule function", async (t) => {
     });
   });
 
-  Deno.env.delete("LAMBDA_TASK_ROOT");
+  Deno.chdir(origDir);
 });

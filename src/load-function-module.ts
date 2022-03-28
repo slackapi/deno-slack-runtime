@@ -10,10 +10,8 @@ export const LoadFunctionModule = async (
   payload: InvocationPayload<FunctionInvocationBody>,
 ): Promise<FunctionModule> => {
   const functionCallbackId = payload?.body?.event?.function?.callback_id ?? "";
-  // Lambda reserved env vars: https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html#configuration-envvars-runtime
-  // If the LAMBDA_TASK_ROOT env var is undefined, we assume we are not running on lambda, and so on a developer's
-  // machine, and thus are in a local run context.
-  const projectRoot = Deno.env.get("LAMBDA_TASK_ROOT") || Deno.cwd();
+  // Project root can be optionally provided after invoking the script.
+  const projectRoot = Deno.args[0] || Deno.cwd();
   const functionDir = `${projectRoot}/functions`;
   const supportedExts = ["js", "ts"];
   const potentialFunctionFiles = supportedExts.map((ext) =>
