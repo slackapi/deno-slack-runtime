@@ -1,24 +1,40 @@
-# oss-guidelines
+# deno-slack-runtime
 
-A repo containing all the basic file templates and general guidelines for any open source project at Slack.
+Helper library for running a Run on Slack Deno function. The goal of this project is to provide modules for:
 
-## Usage
+1. Parsing function execution event payloads into JSON (`src/parse-payload.ts`)
+2. Dynamically loading the target function (`src/load-function-module.ts`)
+3. Marshaling event payloads to individual functions by callback ID and running them (`src/run-function.ts`)
+4. Providing a simple Slack API client to functions being executed (`src/client.ts`)
 
-It's recommended to place all files except `README.md` and `LICENSE` into the `.github/` directory at
-the top level of your repository. The `LICENSE` file should be placed at the top level.
+## Installation
 
-Next, you should search and replace all instances of the following strings:
+In a Hermes project, ensure your `.slack/slack.json` file has the following section:
 
-*  `{project_name}`: This is human readable name for your project, sometimes useful to just use the package name for the distribution (e.g. `@slack/events-api`).
-*  `{project_slug}`: This is usually the last two path segments of the URL on GitHub (e.g. `slackapi/node-slack-events-api`).
-*  `{platform_name}`: The name of the relevant platform this module is built for (e.g. `node.js`).
+TODO: once we figure out distribution for this repo, the below needs to be updated.
 
-Next, customize the templates for you needs. At a minimum, you will need to replace the quoted areas
-in `maintainers_guide.md` and `pull_request_template.md`. **It is recommended to be familiar with all
-the content before committing it into your project.** This repo serves as a base case but there's
-room for you to add or remove pieces until it is right for your project.
+```
+  "run": {
+    "script": {
+      "default": "deno run --unstable --allow-write --allow-read --allow-net ./path/to/deno-slack-runtime/src/mod.ts"
+    }
+  }
+```
 
-All the examples above illustrate an [existing package](https://github.com/slackapi/node-slack-events-api) which you can use for guidance.
+This library assumes that function code exists in a `./functions/` relative to the root of your Hermes project.
 
+## Usage details
 
-**NOTE**: Contact #legal-opensource to request CLA assistant setup for your project
+Once installed, you should be able to use the `slack` (or `hermes`) CLI to run your project locally via `slack run`.
+
+## Testing
+
+Linting, formatting and test execution can be run (and a coverage report output) as follows:
+
+    deno lint ./src
+    deno fmt ./src
+    deno test --allow-read --allow-env --coverage=.coverage && deno coverage --exclude="fixtures|test" .coverage
+
+# Authors
+
+This entire code was shamelessly copied from Curtis Allen's original, internal-only Slack code. Thank you Curtis!
