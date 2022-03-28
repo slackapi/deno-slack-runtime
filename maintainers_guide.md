@@ -15,7 +15,7 @@ this project. If you use this package within your own software as is but don't p
 
     deno lint ./src
     deno fmt ./src
-    deno test --allow-read --allow-env --coverage=.coverage && deno coverage --exclude="fixtures|test" .coverage
+    deno test --allow-read --coverage=.coverage && deno coverage --exclude="fixtures|test" .coverage
 
 ### Generating Documentation (optional)
 
