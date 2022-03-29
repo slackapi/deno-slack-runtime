@@ -10,6 +10,21 @@ Deno.test("LoadFunctionModule function", async (t) => {
   const __dirname = new URL(".", import.meta.url).pathname;
   Deno.chdir(`${__dirname}/fixtures`);
 
+  await t.step(
+    "should throw if a callback_id in the payload does not exist",
+    async () => {
+      await assertRejects(
+        async () => {
+          const payload = generatePayload("funky");
+          payload.body.event.function.callback_id = "";
+          return await LoadFunctionModule(payload);
+        },
+        Error,
+        "No callback_id provided in payload!",
+      );
+    },
+  );
+
   await t.step("should load typescript file if exists", async () => {
     const tsModule = await LoadFunctionModule(generatePayload("funky"));
     assertEquals(
@@ -18,6 +33,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
       "typescript file not loaded",
     );
   });
+
   await t.step("should load javascript file if exists", async () => {
     const jsModule = await LoadFunctionModule(generatePayload("wacky"));
     assertEquals(
@@ -26,10 +42,15 @@ Deno.test("LoadFunctionModule function", async (t) => {
       "javascript file not loaded",
     );
   });
+
   await t.step("should throw if does not exist", async () => {
-    await assertRejects(async () => {
-      return await LoadFunctionModule(generatePayload("nonexistent"));
-    });
+    await assertRejects(
+      async () => {
+        return await LoadFunctionModule(generatePayload("nonexistent"));
+      },
+      Error,
+      "Could not load function module for function: nonexistent",
+    );
   });
 
   Deno.chdir(origDir);
