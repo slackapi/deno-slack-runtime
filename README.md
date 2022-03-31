@@ -9,7 +9,7 @@ Helper library for running a Run on Slack Deno function. The goal of this projec
 
 ## Installation
 
-In a Hermes project, ensure your `.slack/slack.json` file has the following section:
+In a Run-on-Slack project, ensure your `.slack/slack.json` file has the following section:
 
 TODO: once we figure out distribution for this repo, the below needs to be updated.
 
@@ -21,7 +21,7 @@ TODO: once we figure out distribution for this repo, the below needs to be updat
   }
 ```
 
-This library assumes that function code exists in a `./functions/` relative to the root of your Hermes project.
+This library assumes that function code exists in a `./functions/` relative to the root of your Run-on-Slack project.
 
 ## CLI
 
@@ -29,11 +29,11 @@ You can also invoke this library directly from the command line, similarly to th
 
     deno run --unstable --allow-write --allow-read --allow-net ./path/to/deno-slack-runtime/src/mod.ts [optional-project-root]
 
-The `mod.ts` entry point for this library accepts an optional absolute or relative path argument pointing to the Hermes project root. If no such path argument is provided, the current working directory is assumed to be a Hermes project.
+The `mod.ts` entry point for this library accepts an optional absolute or relative path argument pointing to the Run-on-Slack project root. If no such path argument is provided, the current working directory is assumed to be a Run-on-Slack project.
 
 ## Usage details
 
-Once installed, you should be able to use the `slack` (or `hermes`) CLI to run your project locally via `slack run`.
+Once installed, you should be able to use the `slack` CLI to run your project locally via `slack run`.
 
 ## Testing
 
