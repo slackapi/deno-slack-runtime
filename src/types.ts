@@ -37,7 +37,6 @@ export type FunctionContext = {
   inputs: FunctionOutputInputValues;
   token: string;
   event: FunctionInvocationBody["event"];
-  client: ISlackAPIClient;
 };
 
 export type FunctionHandler = {
