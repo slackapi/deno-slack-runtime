@@ -29,33 +29,6 @@ Deno.test("Slack API client", async (t) => {
 
     mf.reset();
   });
-
-  await t.step("response() method", async () => {
-    mf.mock("POST@/api/chat.postMessage", () => {
-      return new Response('{"ok":true}');
-    });
-
-    const res = await client.response(
-      "https://slack.com/api/chat.postMessage",
-      {},
-    );
-    assertEquals(res.ok, true);
-
-    mf.reset();
-
-    mf.mock("POST@/api/chat.postMessage", () => {
-      return new Response('{"ok":false}', { status: 500 });
-    });
-    await assertRejects(async () => {
-      return await client.response(
-        "https://slack.com/api/chat.postMessage",
-        {},
-      );
-    });
-
-    mf.reset();
-  });
-
   mf.uninstall();
 });
 

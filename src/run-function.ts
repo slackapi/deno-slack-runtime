@@ -28,7 +28,6 @@ export const RunFunction = async (
     token,
     // pass along the full event for convenience/future properties
     event: body.event,
-    client,
   });
 
   // App has indicated there's an unrecoverable error with this function invocation
