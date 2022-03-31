@@ -75,16 +75,4 @@ export interface ISlackAPIClient {
    * @throws {Error} Throws an Error if the API response was not OK or a network error occurred.
    */
   call(method: string, data: { [key: string]: unknown }): Promise<BaseResponse>;
-  /**
-   * Calls a Slack API method, to be used in conjunction with Slack Events that send a `response_url` property: {@link https://api.slack.com/interactivity/handling#message_responses}.
-   *
-   * @param {string} url The fully-qualified URL (including protocol, domain and path) of the API to send a request to; typically used for Slack Event API payloads that provide a `response_url` property: {@link https://api.slack.com/interactivity/handling#message_responses}.
-   * @param {Object} data Object representing the data you wish to send along to the API method.
-   * @returns {Promise<BaseResponse>} A Promise that resolves to the data the API responded with.
-   * @throws {Error} Throws an Error if the API response was not OK or a network error occurred.
-   */
-  response(
-    url: string,
-    data: { [key: string]: unknown },
-  ): Promise<BaseResponse>;
 }

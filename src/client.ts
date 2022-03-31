@@ -29,24 +29,6 @@ export class SlackAPIClient implements ISlackAPIClient {
     }
     return await resp.json();
   }
-
-  async response(
-    url: string,
-    data: Record<string, unknown>,
-  ): Promise<BaseResponse> {
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    if (!resp.ok) {
-      const text = await resp.text();
-      throw Error(`${resp.status}: ${text}`);
-    }
-    return await resp.json();
-  }
 }
 
 // Serialize an object into a string so as to be compatible with x-www-form-urlencoded payloads
