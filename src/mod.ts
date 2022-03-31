@@ -25,5 +25,7 @@ await (async () => {
     functionModule,
   );
   // The CLI expects a JSON payload to be output to stdout
+  // This is formalized in the `run` hook of the CLI/SDK Tech Spec:
+  // https://corp.quip.com/0gDvAsqoaaYE/Proposal-CLI-SDK-Interface#temp:C:fOC1991c5aec8994d0db01d26260
   console.log("{}");
 })();
