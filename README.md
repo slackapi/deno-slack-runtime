@@ -5,18 +5,16 @@ Helper library for running a Run on Slack Deno function. The goal of this projec
 1. Parsing function execution event payloads into JSON (`src/parse-payload.ts`)
 2. Dynamically loading the target function (`src/load-function-module.ts`)
 3. Marshaling event payloads to individual functions by callback ID and running them (`src/run-function.ts`)
-4. Providing a simple Slack API client to functions being executed (`src/client.ts`)
+4. Providing a simple Slack API client (for internal use only) (`src/client.ts`)
 
 ## Installation
 
 In your project, ensure your `.slack/slack.json` file has the following section:
 
-TODO: once we figure out distribution for this repo, the below needs to be updated.
-
 ```
   "run": {
     "script": {
-      "default": "deno run -q --unstable --allow-write --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.1/mod.ts"
+      "default": "deno run -q --unstable --allow-write --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.2/mod.ts"
     }
   }
 ```
@@ -27,7 +25,7 @@ This library assumes that function code exists in a `./functions/` relative to t
 
 You can also invoke this library directly from the command line, similarly to the above `slack.json` hook implementation:
 
-    deno run -q --unstable --allow-write --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.1/mod.ts [optional-project-root]
+    deno run -q --unstable --allow-write --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.2/mod.ts [optional-project-root]
 
 The `mod.ts` entry point for this library accepts an optional absolute or relative path argument pointing to the project root.
 If no such path argument is provided, the current working directory is assumed to be the project root.
@@ -35,6 +33,10 @@ If no such path argument is provided, the current working directory is assumed t
 ## Usage details
 
 Once installed, you should be able to use the `slack` CLI to run your project locally via `slack run`.
+
+If you would like to test this against a Slack development instance/workspace, you may need to instruct `deno` to ignore SSL certificate validation errors. You can do so by adjusting the `deno` call like so:
+
+    deno run -q --unstable --allow-write --allow-read --allow-net --unsafely-ignore-certificate-errors=dev.slack.com https://deno.land/x/deno_slack_runtime@0.0.2/mod.ts
 
 ## Testing
 
