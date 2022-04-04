@@ -15,7 +15,7 @@ export const LoadFunctionModule = async (
   }
   // Project root can be optionally provided after invoking the script.
   const projectRoot = Deno.args[0] || Deno.cwd();
-  const functionDir = `${projectRoot}/functions`;
+  const functionDir = `file://${projectRoot}/functions`;
   const supportedExts = ["js", "ts"];
   const potentialFunctionFiles = supportedExts.map((ext) =>
     `${functionDir}/${functionCallbackId}.${ext}`

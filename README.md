@@ -16,7 +16,7 @@ TODO: once we figure out distribution for this repo, the below needs to be updat
 ```
   "run": {
     "script": {
-      "default": "deno run --unstable --allow-write --allow-read --allow-net ./path/to/deno-slack-runtime/src/mod.ts"
+      "default": "deno run -q --unstable --allow-write --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.1/mod.ts"
     }
   }
 ```
@@ -27,7 +27,7 @@ This library assumes that function code exists in a `./functions/` relative to t
 
 You can also invoke this library directly from the command line, similarly to the above `slack.json` hook implementation:
 
-    deno run --unstable --allow-write --allow-read --allow-net ./path/to/deno-slack-runtime/src/mod.ts [optional-project-root]
+    deno run -q --unstable --allow-write --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.1/mod.ts [optional-project-root]
 
 The `mod.ts` entry point for this library accepts an optional absolute or relative path argument pointing to the project root.
 If no such path argument is provided, the current working directory is assumed to be the project root.
