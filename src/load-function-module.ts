@@ -28,15 +28,18 @@ export const LoadFunctionModule = async (
     try {
       functionModule = await import(functionModuleFile);
       break;
-    } catch (_) {
-      // Error importing function module file
+    } catch (e) {
+      if (e.message.includes("[ERROR]")) {
+        // Likely means a syntax error in user code; bubble the exception up
+        throw e;
+      }
     }
     functionModuleFile = potentialFunctionFiles.shift();
   }
 
   if (!functionModule) {
     throw new Error(
-      `Could not load function module for function: ${functionCallbackId}`,
+      `Could not load function module for function: ${functionCallbackId} in ${functionDir}`,
     );
   }
 
