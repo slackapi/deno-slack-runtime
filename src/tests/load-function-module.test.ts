@@ -53,5 +53,15 @@ Deno.test("LoadFunctionModule function", async (t) => {
     );
   });
 
+  await t.step("should throw if function contains syntax error", async () => {
+    await assertRejects(
+      async () => {
+        return await LoadFunctionModule(generatePayload("syntaxerror"));
+      },
+      Error,
+      "[ERROR]",
+    );
+  });
+
   Deno.chdir(origDir);
 });
