@@ -1,4 +1,4 @@
-import { SlackAPIClient } from "./client.ts";
+import { BaseSlackAPIClient } from "https://deno.land/x/deno_slack_api@0.0.2/base-client.ts";
 import {
   FunctionInvocationBody,
   FunctionModule,
@@ -15,7 +15,9 @@ export const RunFunction = async (
   const functionExecutionId = body.event?.function_execution_id;
   const inputs = body.event?.inputs || {};
 
-  const client = new SlackAPIClient(token, env["SLACK_API_URL"]);
+  const client = new BaseSlackAPIClient(token, {
+    slackApiUrl: env["SLACK_API_URL"],
+  });
 
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process
   const {
@@ -32,7 +34,7 @@ export const RunFunction = async (
 
   // App has indicated there's an unrecoverable error with this function invocation
   if (error) {
-    await client.call("functions.completeError", {
+    await client.apiCall("functions.completeError", {
       error,
       function_execution_id: functionExecutionId,
     });
@@ -41,7 +43,7 @@ export const RunFunction = async (
 
   // App has indicated it's function completed successfully
   if (completed) {
-    await client.call("functions.completeSuccess", {
+    await client.apiCall("functions.completeSuccess", {
       outputs,
       function_execution_id: functionExecutionId,
     });

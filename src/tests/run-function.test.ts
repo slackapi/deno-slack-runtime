@@ -1,39 +1,36 @@
-import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
-import sinon from "https://cdn.skypack.dev/sinon@11.1.2?dts";
-import { SlackAPIClient } from "../client.ts";
+import {
+  assertEquals,
+  assertStringIncludes,
+} from "https://deno.land/std@0.133.0/testing/asserts.ts";
+import * as mf from "https://deno.land/x/mock_fetch@0.3.0/mod.ts";
 import { RunFunction } from "../run-function.ts";
 import { FAKE_ID, generatePayload } from "./test_utils.ts";
 
 Deno.test("RunFunction function", async (t) => {
-  const stub = sinon.stub(SlackAPIClient.prototype, "call").returns(
-    Promise.resolve({ ok: true }),
-  );
+  mf.install(); // mock out calls to fetch
   await t.step(
     "should call completeError API if function fails to complete",
     async () => {
+      mf.mock("POST@/api/functions.completeError", async (req: Request) => {
+        assertEquals(req.url, "https://slack.com/api/functions.completeError");
+        const requestBody = await req.text();
+        assertStringIncludes(
+          requestBody,
+          "error=zomg%21",
+        );
+        assertStringIncludes(
+          requestBody,
+          `function_execution_id=${FAKE_ID}`,
+        );
+        return new Response('{"ok":true}');
+      });
+
       const payload = generatePayload("someid");
       await RunFunction(payload, {
         default: async () => {
           return await { error: "zomg!" };
         },
       });
-      const method = stub.firstCall.args[0];
-      const data = stub.firstCall.args[1];
-      assertEquals(
-        method,
-        "functions.completeError",
-        "did not call completeError API",
-      );
-      assertEquals(
-        data.error,
-        "zomg!",
-        "did not send function error to completeError API",
-      );
-      assertEquals(
-        data.function_execution_id,
-        FAKE_ID,
-        "did not send function execution ID to completeError API",
-      );
     },
   );
 
@@ -42,28 +39,30 @@ Deno.test("RunFunction function", async (t) => {
     async () => {
       const payload = generatePayload("someid");
       const outputs = { super: "dope" };
+
+      mf.mock("POST@/api/functions.completeSuccess", async (req: Request) => {
+        assertEquals(
+          req.url,
+          "https://slack.com/api/functions.completeSuccess",
+        );
+        const requestBody = await req.text();
+        assertStringIncludes(
+          requestBody,
+          `outputs=${encodeURIComponent(JSON.stringify(outputs))}`,
+        );
+        assertStringIncludes(
+          requestBody,
+          `function_execution_id=${FAKE_ID}`,
+        );
+        return new Response('{"ok":true}');
+      });
+
       await RunFunction(payload, {
         default: async () => {
           return await { outputs };
         },
       });
-      const method = stub.lastCall.args[0];
-      const data = stub.lastCall.args[1];
-      assertEquals(
-        method,
-        "functions.completeSuccess",
-        "did not call completeSuccess API",
-      );
-      assertEquals(
-        data.outputs,
-        outputs,
-        "did not send function outputs to completeSuccess API",
-      );
-      assertEquals(
-        data.function_execution_id,
-        FAKE_ID,
-        "did not send function execution ID to completeSuccess API",
-      );
     },
   );
+  mf.uninstall();
 });
