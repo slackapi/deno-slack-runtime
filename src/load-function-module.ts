@@ -29,12 +29,14 @@ export const LoadFunctionModule = async (
       functionModule = await import(functionModuleFile);
       break;
     } catch (e) {
-      if (e.message.includes("[ERROR]")) {
-        // Likely means a syntax error in user code; bubble the exception up
+      if (e.message.includes("Module not found")) {
+        // Likely means the current file extension being loaded does not exist; move on to the next one
+        functionModuleFile = potentialFunctionFiles.shift();
+      } else {
+        // Any other issue other than module-not-found we should raise to the user.
         throw e;
       }
     }
-    functionModuleFile = potentialFunctionFiles.shift();
   }
 
   if (!functionModule) {
