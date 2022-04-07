@@ -1,8 +1,5 @@
-import {
-  assertEquals,
-  assertStringIncludes,
-} from "https://deno.land/std@0.133.0/testing/asserts.ts";
-import * as mf from "https://deno.land/x/mock_fetch@0.3.0/mod.ts";
+import { assertEquals, assertStringIncludes } from "../dev_deps.ts";
+import * as mf from "../dev_deps.ts";
 import { RunFunction } from "../run-function.ts";
 import { FAKE_ID, generatePayload } from "./test_utils.ts";
 

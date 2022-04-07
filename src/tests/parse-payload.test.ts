@@ -1,7 +1,4 @@
-import {
-  assertEquals,
-  assertRejects,
-} from "https://deno.land/std/testing/asserts.ts";
+import { assertEquals, assertRejects } from "../dev_deps.ts";
 import { ParsePayload } from "../parse-payload.ts";
 
 const fakeStdin = (contents: string) => {
