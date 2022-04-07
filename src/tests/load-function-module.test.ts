@@ -60,15 +60,18 @@ Deno.test("LoadFunctionModule function", async (t) => {
     );
   });
 
-  await t.step("should throw if function has a wrong import path", async () => {
-    await assertRejects(
-      async () => {
-        return await LoadFunctionModule(generatePayload("importerror"));
-      },
-      Error,
-      "not prefixed",
-    );
-  });
+  await t.step(
+    "should throw if function has a wrong import path (e.g. bad or missing import map)",
+    async () => {
+      await assertRejects(
+        async () => {
+          return await LoadFunctionModule(generatePayload("importerror"));
+        },
+        Error,
+        "not prefixed",
+      );
+    },
+  );
 
   Deno.chdir(origDir);
 });
