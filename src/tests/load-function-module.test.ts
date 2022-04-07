@@ -1,7 +1,4 @@
-import {
-  assertEquals,
-  assertRejects,
-} from "https://deno.land/std/testing/asserts.ts";
+import { assertEquals, assertRejects } from "../dev_deps.ts";
 import { LoadFunctionModule } from "../load-function-module.ts";
 import { generatePayload } from "./test_utils.ts";
 

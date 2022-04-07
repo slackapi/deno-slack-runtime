@@ -1,4 +1,4 @@
-import { BaseSlackAPIClient } from "https://deno.land/x/deno_slack_api@0.0.2/base-client.ts";
+import { BaseSlackAPIClient } from "./deps.ts";
 import {
   FunctionInvocationBody,
   FunctionModule,

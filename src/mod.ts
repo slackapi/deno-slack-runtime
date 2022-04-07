@@ -1,6 +1,7 @@
+import { readAll } from "./deps.ts";
+
 import { FunctionInvocationBody, InvocationPayload } from "./types.ts";
 import { ParsePayload } from "./parse-payload.ts";
-import { readAll } from "https://deno.land/std@0.99.0/io/util.ts";
 import { LoadFunctionModule } from "./load-function-module.ts";
 import { RunFunction } from "./run-function.ts";
 
