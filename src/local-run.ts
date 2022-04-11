@@ -1,17 +1,22 @@
-import { readAll } from "./deps.ts";
+import { createManifest, dirname, readAll } from "./deps.ts";
 
 import { FunctionInvocationBody, InvocationPayload } from "./types.ts";
 import { ParsePayload } from "./parse-payload.ts";
 import { LoadFunctionModule } from "./load-function-module.ts";
 import { RunFunction } from "./run-function.ts";
 
-export const run = async function (functionDir: string) {
-  // Directory containing functions must be provided when invoking this script.
-  if (!functionDir) {
-    throw new Error("Missing function-directory argument!");
+export const runLocally = async function () {
+  const workingDirectory = Deno.cwd();
+  const manifest = await createManifest({
+    manifestOnly: true,
+    log: () => {},
+    workingDirectory,
+  });
+  if (!manifest.functions) {
+    throw new Error(
+      `No function definitions were found in the manifest! manifest.functions: ${manifest.functions}`,
+    );
   }
-  functionDir = `file://${await Deno.realPath(functionDir)}`;
-
   const payload = await ParsePayload(readAll);
 
   // Only supports function_executed events
@@ -22,6 +27,18 @@ export const run = async function (functionDir: string) {
   if (eventType != "function_executed") {
     throw new Error(`Unsupported event type: "${eventType || "not_found"}"`);
   }
+
+  // Based on the function callback_id, look for a source_file property in the underlying manifest's function definition for local run
+  const functionCallbackId = payload?.body?.event?.function?.callback_id;
+  const functionDefn = manifest.functions[functionCallbackId];
+  if (!functionDefn) {
+    throw new Error(
+      `No function definition for function callback id ${functionCallbackId} was found in the manifest! manifest.functions: ${manifest.functions}`,
+    );
+  }
+  const functionDir = `file://${workingDirectory}/${
+    dirname(functionDefn.source_file)
+  }`;
 
   const functionModule = await LoadFunctionModule(
     functionDir,
@@ -39,5 +56,5 @@ export const run = async function (functionDir: string) {
 };
 
 if (import.meta.main) {
-  await run(Deno.args[0]);
+  await runLocally();
 }
