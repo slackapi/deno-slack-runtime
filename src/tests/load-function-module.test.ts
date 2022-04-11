@@ -5,7 +5,9 @@ import { generatePayload } from "./test_utils.ts";
 Deno.test("LoadFunctionModule function", async (t) => {
   const origDir = Deno.cwd();
   const __dirname = new URL(".", import.meta.url).pathname;
-  Deno.chdir(`${__dirname}/fixtures`);
+  const fixturesDir = `${__dirname}/fixtures`;
+  Deno.chdir(fixturesDir);
+  const functionsDir = `${fixturesDir}/functions`;
 
   await t.step(
     "should throw if a callback_id in the payload does not exist",
@@ -14,7 +16,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
         async () => {
           const payload = generatePayload("funky");
           payload.body.event.function.callback_id = "";
-          return await LoadFunctionModule(payload);
+          return await LoadFunctionModule(functionsDir, payload);
         },
         Error,
         "No callback_id provided in payload!",
@@ -23,7 +25,10 @@ Deno.test("LoadFunctionModule function", async (t) => {
   );
 
   await t.step("should load typescript file if exists", async () => {
-    const tsModule = await LoadFunctionModule(generatePayload("funky"));
+    const tsModule = await LoadFunctionModule(
+      functionsDir,
+      generatePayload("funky"),
+    );
     assertEquals(
       tsModule.default.name,
       "funkyTS",
@@ -32,7 +37,10 @@ Deno.test("LoadFunctionModule function", async (t) => {
   });
 
   await t.step("should load javascript file if exists", async () => {
-    const jsModule = await LoadFunctionModule(generatePayload("wacky"));
+    const jsModule = await LoadFunctionModule(
+      functionsDir,
+      generatePayload("wacky"),
+    );
     assertEquals(
       jsModule.default.name,
       "wackyJS",
@@ -43,7 +51,10 @@ Deno.test("LoadFunctionModule function", async (t) => {
   await t.step("should throw if does not exist", async () => {
     await assertRejects(
       async () => {
-        return await LoadFunctionModule(generatePayload("nonexistent"));
+        return await LoadFunctionModule(
+          functionsDir,
+          generatePayload("nonexistent"),
+        );
       },
       Error,
       "Could not load function module for function: nonexistent",
@@ -53,7 +64,10 @@ Deno.test("LoadFunctionModule function", async (t) => {
   await t.step("should throw if function contains syntax error", async () => {
     await assertRejects(
       async () => {
-        return await LoadFunctionModule(generatePayload("syntaxerror"));
+        return await LoadFunctionModule(
+          functionsDir,
+          generatePayload("syntaxerror"),
+        );
       },
       Error,
       "[ERROR]",
@@ -65,7 +79,10 @@ Deno.test("LoadFunctionModule function", async (t) => {
     async () => {
       await assertRejects(
         async () => {
-          return await LoadFunctionModule(generatePayload("importerror"));
+          return await LoadFunctionModule(
+            functionsDir,
+            generatePayload("importerror"),
+          );
         },
         Error,
         "not prefixed",
