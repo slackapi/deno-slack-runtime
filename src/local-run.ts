@@ -1,4 +1,4 @@
-import { createManifest, dirname, readAll } from "./deps.ts";
+import { createManifest, parse, readAll } from "./deps.ts";
 
 import { FunctionInvocationBody, InvocationPayload } from "./types.ts";
 import { ParsePayload } from "./parse-payload.ts";
@@ -36,9 +36,16 @@ export const runLocally = async function () {
       `No function definition for function callback id ${functionCallbackId} was found in the manifest! manifest.functions: ${manifest.functions}`,
     );
   }
-  const functionDir = `file://${workingDirectory}/${
-    dirname(functionDefn.source_file)
-  }`;
+
+  const { dir: sourceDir, name: sourceFilename } = parse(
+    functionDefn.source_file,
+  );
+  const functionDir = `file://${workingDirectory}/${sourceDir}`;
+
+  if (sourceFilename !== payload?.body?.event?.function.callback_id) {
+    // Override the callback_id to point at the local file name
+    payload.body.event.function.callback_id = sourceFilename;
+  }
 
   const functionModule = await LoadFunctionModule(
     functionDir,
