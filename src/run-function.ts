@@ -1,12 +1,9 @@
 import { BaseSlackAPIClient } from "./deps.ts";
 import {
-  AsyncFunctionHandler,
   FunctionContext,
-  FunctionHandlerReturnArgs,
   FunctionInvocationBody,
   FunctionModule,
   InvocationPayload,
-  SyncFunctionHandler,
 } from "./types.ts";
 
 export const RunFunction = async (
@@ -23,12 +20,6 @@ export const RunFunction = async (
     slackApiUrl: env["SLACK_API_URL"],
   });
 
-  const returnArgs: FunctionHandlerReturnArgs = {
-    completed: false,
-    outputs: {},
-    error: undefined,
-  };
-
   const functionContext: FunctionContext = {
     inputs,
     env,
@@ -37,45 +28,27 @@ export const RunFunction = async (
   };
 
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process
-  if (functionModule.default.constructor.name === "AsyncFunction") {
-    const functionToRun = functionModule.default as AsyncFunctionHandler;
-
-    const {
-      completed = true,
-      outputs = {},
-      error,
-    } = await functionToRun(functionContext);
-
-    returnArgs.completed = completed;
-    returnArgs.outputs = outputs;
-    returnArgs.error = error;
-  } else {
-    const functionToRun = functionModule.default as SyncFunctionHandler;
-
-    const {
-      completed = true,
-      outputs = {},
-      error,
-    } = functionToRun(functionContext);
-
-    returnArgs.completed = completed;
-    returnArgs.outputs = outputs;
-    returnArgs.error = error;
-  }
+  const {
+    completed = true,
+    outputs = {},
+    error,
+  } = await functionModule.default(
+    functionContext,
+  );
 
   // App has indicated there's an unrecoverable error with this function invocation
-  if (returnArgs.error) {
+  if (error) {
     await client.apiCall("functions.completeError", {
-      error: returnArgs.error,
+      error: error,
       function_execution_id: functionExecutionId,
     });
     return;
   }
 
   // App has indicated it's function completed successfully
-  if (returnArgs.completed) {
+  if (completed) {
     await client.apiCall("functions.completeSuccess", {
-      outputs: returnArgs.outputs,
+      outputs: outputs,
       function_execution_id: functionExecutionId,
     });
     return;
