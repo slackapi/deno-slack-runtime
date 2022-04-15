@@ -39,9 +39,15 @@ export type FunctionContext = {
   event: FunctionInvocationBody["event"];
 };
 
-export type FunctionHandler = {
+export type AsyncFunctionHandler = {
   (context: FunctionContext): Promise<FunctionHandlerReturnArgs>;
 };
+
+export type SyncFunctionHandler = {
+  (context: FunctionContext): FunctionHandlerReturnArgs;
+};
+
+export type FunctionHandler = AsyncFunctionHandler | SyncFunctionHandler;
 
 // This is the interface a developer-provided function module should adhere to
 export type FunctionModule = {

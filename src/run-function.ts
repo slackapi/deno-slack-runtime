@@ -28,7 +28,6 @@ export const RunFunction = async (
     inputs,
     env,
     token,
-    // pass along the full event for convenience/future properties
     event: body.event,
   });
 
