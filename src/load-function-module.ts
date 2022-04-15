@@ -40,7 +40,7 @@ export const LoadFunctionModule = async (
 
   if (!functionModule) {
     throw new Error(
-      `Could not load function module for function: ${functionCallbackId} in ${functionDir}`,
+      `Could not load function module for function: ${functionCallbackId} in ${functionDir}. Make sure your function's "source_file" is relative to your project root.`,
     );
   }
 
