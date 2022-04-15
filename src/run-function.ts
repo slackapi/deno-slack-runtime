@@ -24,14 +24,12 @@ export const RunFunction = async (
     completed = true,
     outputs = {},
     error,
-  } = await functionModule.default(
-    {
-      inputs,
-      env,
-      token,
-      event: body.event,
-    },
-  );
+  } = await functionModule.default({
+    inputs,
+    env,
+    token,
+    event: body.event,
+  });
 
   // App has indicated there's an unrecoverable error with this function invocation
   if (error) {
