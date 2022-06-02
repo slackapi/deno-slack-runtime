@@ -1,0 +1,16 @@
+{
+  "fmt": {
+    "files": {
+      "include": ["src"]
+    }
+  },
+  "lint": {
+    "files": {
+      "include": ["src"]
+    }
+  },
+  "tasks": {
+    "test": "deno fmt --check && deno lint && deno test -A src",
+    "coverage": "deno test -A --coverage=.coverage src && deno coverage --exclude=fixtures --exclude=test .coverage"
+  }
+}

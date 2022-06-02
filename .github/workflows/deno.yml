@@ -28,12 +28,5 @@ jobs:
         with:
           deno-version: v1.x
 
-      # Uncomment this step to verify the use of 'deno fmt' on each commit.
-      - name: Verify formatting
-        run: deno fmt ./src --check
-
-      - name: Run linter
-        run: deno lint ./src
-
       - name: Run tests
-        run: deno test --allow-read --allow-env --coverage=.coverage && deno coverage --exclude="fixtures|test" .coverage
+        run: deno task test
