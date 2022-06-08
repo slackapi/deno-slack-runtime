@@ -49,9 +49,101 @@ export type SyncFunctionHandler = {
 
 export type FunctionHandler = AsyncFunctionHandler | SyncFunctionHandler;
 
+// --- Block Actions Types -- //
+// TODO: expand the type here
+type BlockAction = {
+  type: string;
+  "action_id": string;
+  "block_id": string;
+  "action_ts": string;
+  value?: string;
+  // deno-lint-ignore no-explicit-any
+  [key: string]: any;
+};
+export type BlockActionInvocationBody = {
+  type: "block_actions";
+  actions: BlockAction[];
+  "trigger_id": string;
+  "response_url": string;
+  user: {
+    id: string;
+    username: string;
+    name: string;
+    "team_id": string;
+  };
+  state?: {
+    // deno-lint-ignore no-explicit-any
+    values: any;
+  };
+  view?: {
+    state?: {
+      // deno-lint-ignore no-explicit-any
+      values: any;
+    };
+  };
+  // deno-lint-ignore no-explicit-any
+  [key: string]: any;
+};
+
+export type BlockActionsHandlerArgs = {
+  action: BlockAction;
+  body: BlockActionInvocationBody;
+  token: string;
+  env: EnvironmentVariables;
+};
+
+export type AsyncBlockActionsHandler = {
+  // deno-lint-ignore no-explicit-any
+  (args: BlockActionsHandlerArgs): Promise<any>;
+};
+
+export type SyncBlockActionsHandler = {
+  // deno-lint-ignore no-explicit-any
+  (args: BlockActionsHandlerArgs): any;
+};
+
+export type BlockActionsHandler =
+  | AsyncBlockActionsHandler
+  | SyncBlockActionsHandler;
+
+// TODO: expand the type here
+// --- View Submission Types --- //
+export type ViewSubmissionInvocationBody = {
+  type: "view_submission";
+  view: {
+    "callback_id": string;
+    // deno-lint-ignore no-explicit-any
+    [key: string]: any;
+  };
+  // deno-lint-ignore no-explicit-any
+  [key: string]: any;
+};
+
+type ViewSubmissionHandlerArgs = {
+  body: ViewSubmissionInvocationBody;
+  token: string;
+  env: EnvironmentVariables;
+};
+
+type AsyncViewSubmissionHandler = {
+  // deno-lint-ignore no-explicit-any
+  (args: ViewSubmissionHandlerArgs): Promise<any>;
+};
+
+type SyncViewSubmissionHandler = {
+  // deno-lint-ignore no-explicit-any
+  (args: ViewSubmissionHandlerArgs): any;
+};
+
+type ViewSubmissionHandler =
+  | AsyncViewSubmissionHandler
+  | SyncViewSubmissionHandler;
+
 // This is the interface a developer-provided function module should adhere to
 export type FunctionModule = {
   default: FunctionHandler;
+  actions?: BlockActionsHandler;
+  viewSubmissions?: ViewSubmissionHandler;
   //TODO: add support for an `actions()` handler block_actions could route too
   // In order to do this, block_actions would need to include the function callback_id
 };
