@@ -7,7 +7,8 @@ import {
 export const RunViewSubmission = async (
   payload: InvocationPayload<ViewSubmissionInvocationBody>,
   functionModule: FunctionModule,
-): Promise<void> => {
+  // deno-lint-ignore no-explicit-any
+): Promise<any> => {
   const { body, context } = payload;
   const env = context.variables || {};
   const token = context.bot_access_token || "";

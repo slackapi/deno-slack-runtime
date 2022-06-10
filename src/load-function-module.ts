@@ -1,24 +1,17 @@
-import {
-  FunctionInvocationBody,
-  FunctionModule,
-  InvocationPayload,
-} from "./types.ts";
+import { FunctionModule } from "./types.ts";
 
 // Given a function callback_id, import and return the corresponding function module
 // provided by the developer. This should have been bundled to live alongside the deno-runtime module
 export const LoadFunctionModule = async (
-  functionDir: string,
-  payload: InvocationPayload<FunctionInvocationBody>,
-): Promise<FunctionModule> => {
-  const functionCallbackId = payload?.body?.event?.function?.callback_id;
-  if (!functionCallbackId) {
-    throw new Error("No callback_id provided in payload!");
-  }
+  potentialFunctionFiles: string[],
+  // functionDir: string,
+  // functionCallbackId: string,
+): Promise<FunctionModule | null> => {
+  // const supportedExts = ["js", "ts"];
+  // const potentialFunctionFiles = supportedExts.map((ext) =>
+  //   `${functionDir}/${functionCallbackId}.${ext}`
+  // );
 
-  const supportedExts = ["js", "ts"];
-  const potentialFunctionFiles = supportedExts.map((ext) =>
-    `${functionDir}/${functionCallbackId}.${ext}`
-  );
   let functionModuleFile = potentialFunctionFiles.shift();
   let functionModule: FunctionModule | null = null;
   while (functionModuleFile) {
@@ -38,11 +31,11 @@ export const LoadFunctionModule = async (
     }
   }
 
-  if (!functionModule) {
-    throw new Error(
-      `Could not load function module for function: ${functionCallbackId} in ${functionDir}. Make sure your function's "source_file" is relative to your project root.`,
-    );
-  }
+  // if (!functionModule) {
+  //   throw new Error(
+  //     `Could not load function module for function: ${functionCallbackId} in ${functionDir}. Make sure your function's "source_file" is relative to your project root.`,
+  //   );
+  // }
 
   return functionModule;
 };
