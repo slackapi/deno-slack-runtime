@@ -11,8 +11,13 @@ export const run = async function (functionDir: string) {
 
   const payload = await ParsePayload(readAll);
 
-  const resp = await DispatchPayload(payload, () => {
-    return functionDir;
+  const resp = await DispatchPayload(payload, (functionCallbackId) => {
+    const supportedExts = ["js", "ts"];
+    const potentialFunctionFiles = supportedExts.map((ext) =>
+      `${functionDir}/${functionCallbackId}.${ext}`
+    );
+
+    return potentialFunctionFiles;
   });
 
   // The CLI expects a JSON payload to be output to stdout
