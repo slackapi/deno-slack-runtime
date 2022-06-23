@@ -51,6 +51,11 @@ export type SyncFunctionHandler = {
 
 export type FunctionHandler = AsyncFunctionHandler | SyncFunctionHandler;
 
+// This is the interface a developer-provided function module should adhere to
+export type FunctionModule = {
+  default: FunctionHandler;
+};
+
 export type BaseResponse = {
   /** `true` if the response from the server was successful, `false` otherwise. */
   ok: boolean;
@@ -76,11 +81,6 @@ export interface ISlackAPIClient {
    */
   call(method: string, data: { [key: string]: unknown }): Promise<BaseResponse>;
 }
-
-// This is the interface a developer-provided function module should adhere to
-export type FunctionModule = {
-  default: FunctionHandler;
-};
 
 export const EventTypes = {
   FUNCTION_EXECUTED: "function_executed",
