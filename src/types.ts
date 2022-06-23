@@ -28,6 +28,7 @@ export type FunctionInvocationBody = {
     };
     function_execution_id: string;
     inputs: FunctionOutputInputValues;
+    bot_access_token?: string;
   };
 };
 
@@ -106,6 +107,7 @@ export type ViewClosedInvocationBody = {
     // deno-lint-ignore no-explicit-any
     [key: string]: any;
   };
+  bot_access_token?: string;
   // deno-lint-ignore no-explicit-any
   [key: string]: any;
 };
@@ -129,6 +131,7 @@ export type ViewSubmissionInvocationBody = {
     // deno-lint-ignore no-explicit-any
     [key: string]: any;
   };
+  bot_access_token?: string;
   // deno-lint-ignore no-explicit-any
   [key: string]: any;
 };
@@ -176,6 +179,7 @@ export type BlockActionInvocationBody = {
       values: any;
     };
   };
+  bot_access_token?: string;
   // deno-lint-ignore no-explicit-any
   [key: string]: any;
 };

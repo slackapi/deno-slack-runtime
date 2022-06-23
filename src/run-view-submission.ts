@@ -11,7 +11,7 @@ export const RunViewSubmission = async (
 ): Promise<any> => {
   const { body, context } = payload;
   const env = context.variables || {};
-  const token = context.bot_access_token || "";
+  const token = context.bot_access_token || body.bot_access_token || "";
 
   if (!functionModule.viewSubmission) {
     throw new Error(
