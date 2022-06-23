@@ -1,22 +1,13 @@
 import { FunctionModule } from "./types.ts";
 
-// Given a function callback_id, import and return the corresponding function module
-// provided by the developer. This should have been bundled to live alongside the deno-runtime module
+// Given a set of supported files, look for the slack function module file
 export const LoadFunctionModule = async (
   potentialFunctionFiles: string[],
-  // functionDir: string,
-  // functionCallbackId: string,
 ): Promise<FunctionModule | null> => {
-  // const supportedExts = ["js", "ts"];
-  // const potentialFunctionFiles = supportedExts.map((ext) =>
-  //   `${functionDir}/${functionCallbackId}.${ext}`
-  // );
-
   let functionModuleFile = potentialFunctionFiles.shift();
   let functionModule: FunctionModule | null = null;
   while (functionModuleFile) {
     // Import function module
-
     try {
       functionModule = await import(functionModuleFile);
       break;
@@ -30,12 +21,6 @@ export const LoadFunctionModule = async (
       }
     }
   }
-
-  // if (!functionModule) {
-  //   throw new Error(
-  //     `Could not load function module for function: ${functionCallbackId} in ${functionDir}. Make sure your function's "source_file" is relative to your project root.`,
-  //   );
-  // }
 
   return functionModule;
 };

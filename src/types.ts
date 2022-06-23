@@ -14,11 +14,7 @@ export type InvocationPayload<Body extends ValidInvocationPayloadBody> = {
   };
 };
 
-export type ValidInvocationPayloadBody =
-  | BlockActionInvocationBody
-  | ViewSubmissionInvocationBody
-  | ViewClosedInvocationBody
-  | FunctionInvocationBody;
+export type ValidInvocationPayloadBody = FunctionInvocationBody;
 
 export type FunctionInvocationBody = {
   event: {
@@ -55,135 +51,6 @@ export type SyncFunctionHandler = {
 
 export type FunctionHandler = AsyncFunctionHandler | SyncFunctionHandler;
 
-// --- Block Actions Types -- //
-// TODO: expand the type here
-type BlockAction = {
-  type: string;
-  "action_id": string;
-  "block_id": string;
-  "action_ts": string;
-  value?: string;
-  // deno-lint-ignore no-explicit-any
-  [key: string]: any;
-};
-export type BlockActionInvocationBody = {
-  type: "block_actions";
-  actions: BlockAction[];
-  "trigger_id": string;
-  "response_url": string;
-  user: {
-    id: string;
-    username: string;
-    name: string;
-    "team_id": string;
-  };
-  state?: {
-    // deno-lint-ignore no-explicit-any
-    values: any;
-  };
-  view?: {
-    state?: {
-      // deno-lint-ignore no-explicit-any
-      values: any;
-    };
-  };
-  // deno-lint-ignore no-explicit-any
-  [key: string]: any;
-};
-
-export type BlockActionsHandlerArgs = {
-  action: BlockAction;
-  body: BlockActionInvocationBody;
-  token: string;
-  env: EnvironmentVariables;
-};
-
-export type AsyncBlockActionsHandler = {
-  // deno-lint-ignore no-explicit-any
-  (args: BlockActionsHandlerArgs): Promise<any>;
-};
-
-export type SyncBlockActionsHandler = {
-  // deno-lint-ignore no-explicit-any
-  (args: BlockActionsHandlerArgs): any;
-};
-
-export type BlockActionsHandler =
-  | AsyncBlockActionsHandler
-  | SyncBlockActionsHandler;
-
-// --- View Submission Types --- //
-export type ViewSubmissionInvocationBody = {
-  type: "view_submission";
-  view: {
-    "callback_id": string;
-    // deno-lint-ignore no-explicit-any
-    [key: string]: any;
-  };
-  // deno-lint-ignore no-explicit-any
-  [key: string]: any;
-};
-
-type ViewSubmissionHandlerArgs = {
-  body: ViewSubmissionInvocationBody;
-  token: string;
-  env: EnvironmentVariables;
-};
-
-type AsyncViewSubmissionHandler = {
-  // deno-lint-ignore no-explicit-any
-  (args: ViewSubmissionHandlerArgs): Promise<any>;
-};
-
-type SyncViewSubmissionHandler = {
-  // deno-lint-ignore no-explicit-any
-  (args: ViewSubmissionHandlerArgs): any;
-};
-
-type ViewSubmissionHandler =
-  | AsyncViewSubmissionHandler
-  | SyncViewSubmissionHandler;
-
-// --- View Closed Types --- //
-export type ViewClosedInvocationBody = {
-  type: "view_closed";
-  view: {
-    "callback_id": string;
-    // deno-lint-ignore no-explicit-any
-    [key: string]: any;
-  };
-  // deno-lint-ignore no-explicit-any
-  [key: string]: any;
-};
-
-type ViewClosedHandlerArgs = {
-  body: ViewClosedInvocationBody;
-  token: string;
-  env: EnvironmentVariables;
-};
-
-type AsyncViewClosedHandler = {
-  // deno-lint-ignore no-explicit-any
-  (args: ViewClosedHandlerArgs): Promise<any>;
-};
-
-type SyncViewClosedHandler = {
-  // deno-lint-ignore no-explicit-any
-  (args: ViewClosedHandlerArgs): any;
-};
-
-type ViewClosedHandler =
-  | AsyncViewClosedHandler
-  | SyncViewClosedHandler;
-
-// This is the interface a developer-provided function module should adhere to
-export type FunctionModule = {
-  default: FunctionHandler;
-  blockActions?: BlockActionsHandler;
-  viewSubmissions?: ViewSubmissionHandler;
-  viewClosed?: ViewClosedHandler;
-};
-
 export type BaseResponse = {
   /** `true` if the response from the server was successful, `false` otherwise. */
   ok: boolean;
@@ -210,11 +77,13 @@ export interface ISlackAPIClient {
   call(method: string, data: { [key: string]: unknown }): Promise<BaseResponse>;
 }
 
+// This is the interface a developer-provided function module should adhere to
+export type FunctionModule = {
+  default: FunctionHandler;
+};
+
 export const EventTypes = {
   FUNCTION_EXECUTED: "function_executed",
-  BLOCK_ACTIONS: "block_actions",
-  VIEW_SUBMISSION: "view_submission",
-  VIEW_CLOSED: "view_closed",
 } as const;
 
 export type ValidEventType = typeof EventTypes[keyof typeof EventTypes];
