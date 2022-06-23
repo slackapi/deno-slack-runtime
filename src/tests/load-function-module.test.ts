@@ -1,6 +1,5 @@
 import { assertEquals, assertExists, assertRejects } from "../dev_deps.ts";
 import { LoadFunctionModule } from "../load-function-module.ts";
-// import { generatePayload } from "./test_utils.ts";
 
 Deno.test("LoadFunctionModule function", async (t) => {
   const origDir = Deno.cwd();
