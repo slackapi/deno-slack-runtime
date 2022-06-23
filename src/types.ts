@@ -87,11 +87,6 @@ export type BlockActionInvocationBody = {
       values: any;
     };
   };
-  function_data: {
-    function: {
-      callback_id: string;
-    };
-  };
   // deno-lint-ignore no-explicit-any
   [key: string]: any;
 };
