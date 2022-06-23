@@ -17,6 +17,7 @@ export type InvocationPayload<Body extends ValidInvocationPayloadBody> = {
 export type ValidInvocationPayloadBody =
   | BlockActionInvocationBody
   | ViewSubmissionInvocationBody
+  | ViewClosedInvocationBody
   | FunctionInvocationBody;
 
 export type FunctionInvocationBody = {
@@ -86,6 +87,11 @@ export type BlockActionInvocationBody = {
       values: any;
     };
   };
+  function_data: {
+    function: {
+      callback_id: string;
+    };
+  };
   // deno-lint-ignore no-explicit-any
   [key: string]: any;
 };
@@ -111,7 +117,6 @@ export type BlockActionsHandler =
   | AsyncBlockActionsHandler
   | SyncBlockActionsHandler;
 
-// TODO: expand the type here
 // --- View Submission Types --- //
 export type ViewSubmissionInvocationBody = {
   type: "view_submission";
@@ -144,13 +149,44 @@ type ViewSubmissionHandler =
   | AsyncViewSubmissionHandler
   | SyncViewSubmissionHandler;
 
+// --- View Closed Types --- //
+export type ViewClosedInvocationBody = {
+  type: "view_closed";
+  view: {
+    "callback_id": string;
+    // deno-lint-ignore no-explicit-any
+    [key: string]: any;
+  };
+  // deno-lint-ignore no-explicit-any
+  [key: string]: any;
+};
+
+type ViewClosedHandlerArgs = {
+  body: ViewClosedInvocationBody;
+  token: string;
+  env: EnvironmentVariables;
+};
+
+type AsyncViewClosedHandler = {
+  // deno-lint-ignore no-explicit-any
+  (args: ViewClosedHandlerArgs): Promise<any>;
+};
+
+type SyncViewClosedHandler = {
+  // deno-lint-ignore no-explicit-any
+  (args: ViewClosedHandlerArgs): any;
+};
+
+type ViewClosedHandler =
+  | AsyncViewClosedHandler
+  | SyncViewClosedHandler;
+
 // This is the interface a developer-provided function module should adhere to
 export type FunctionModule = {
   default: FunctionHandler;
-  actions?: BlockActionsHandler;
+  blockActions?: BlockActionsHandler;
   viewSubmissions?: ViewSubmissionHandler;
-  //TODO: add support for an `actions()` handler block_actions could route too
-  // In order to do this, block_actions would need to include the function callback_id
+  viewClosed?: ViewClosedHandler;
 };
 
 export type BaseResponse = {
@@ -183,6 +219,7 @@ export const EventTypes = {
   FUNCTION_EXECUTED: "function_executed",
   BLOCK_ACTIONS: "block_actions",
   VIEW_SUBMISSION: "view_submission",
+  VIEW_CLOSED: "view_closed",
 } as const;
 
 export type ValidEventType = typeof EventTypes[keyof typeof EventTypes];

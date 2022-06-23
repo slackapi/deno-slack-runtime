@@ -1,16 +1,5 @@
-import { createManifest, parse, readAll } from "./deps.ts";
-
-import {
-  BlockActionInvocationBody,
-  FunctionInvocationBody,
-  InvocationPayload,
-  ViewSubmissionInvocationBody,
-} from "./types.ts";
+import { createManifest, readAll } from "./deps.ts";
 import { ParsePayload } from "./parse-payload.ts";
-import { LoadFunctionModule } from "./load-function-module.ts";
-import { RunFunction } from "./run-function.ts";
-import { RunBlockAction } from "./run-block-action.ts";
-import { RunViewSubmission } from "./run-view-submission.ts";
 import { DispatchPayload } from "./dispatch-payload.ts";
 
 export const runLocally = async function () {
@@ -27,6 +16,8 @@ export const runLocally = async function () {
   }
   const payload = await ParsePayload(readAll);
 
+  // Finds the corresponding function in the manifest definition, and then uses
+  // the `source_file` property to determine the function module file location
   const resp = await DispatchPayload(payload, (functionCallbackId) => {
     const functionDefn = manifest.functions[functionCallbackId];
     if (!functionDefn) {
@@ -35,9 +26,6 @@ export const runLocally = async function () {
       );
     }
 
-    // const { dir: sourceDir, name: sourceFilename } = parse(
-    //   functionDefn.source_file,
-    // );
     const functionFile =
       `file://${workingDirectory}/${functionDefn.source_file}`;
 

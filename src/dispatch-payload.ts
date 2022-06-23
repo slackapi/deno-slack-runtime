@@ -2,12 +2,14 @@ import { LoadFunctionModule } from "./load-function-module.ts";
 import { RunFunction } from "./run-function.ts";
 import { RunBlockAction } from "./run-block-action.ts";
 import { RunViewSubmission } from "./run-view-submission.ts";
+import { RunViewClosed } from "./run-view-closed.ts";
 import {
   BlockActionInvocationBody,
   EventTypes,
   FunctionInvocationBody,
   InvocationPayload,
   ValidEventType,
+  ViewClosedInvocationBody,
   ViewSubmissionInvocationBody,
 } from "./types.ts";
 
@@ -75,7 +77,50 @@ export const DispatchPayload = async (
         functionModule,
       );
       break;
+    case EventTypes.VIEW_CLOSED:
+      console.log("view_closed event", JSON.stringify(payload));
+      resp = await RunViewClosed(
+        payload as InvocationPayload<ViewClosedInvocationBody>,
+        functionModule,
+      );
+      break;
   }
 
   return resp || {};
 };
+
+// function extractFunctionCallbackId(
+//   payload: InvocationPayload<any>,
+//   eventType: ValidEventType,
+// ): string | null {
+//   switch (eventType) {
+//     case EventTypes.FUNCTION_EXECUTED: {
+//       const typedPayload = payload as InvocationPayload<FunctionInvocationBody>;
+
+//       return typedPayload.body.event.function.callback_id;
+//     }
+//     case EventTypes.BLOCK_ACTIONS:
+//       resp = await RunBlockAction(
+//         payload as InvocationPayload<BlockActionInvocationBody>,
+//         functionModule,
+//       );
+//       break;
+//     case EventTypes.VIEW_SUBMISSION:
+//       resp = await RunViewSubmission(
+//         payload as InvocationPayload<ViewSubmissionInvocationBody>,
+//         functionModule,
+//       );
+//       break;
+//     case EventTypes.VIEW_CLOSED:
+//       console.log("view_closed event", JSON.stringify(payload));
+//       resp = await RunViewClosed(
+//         payload as InvocationPayload<ViewClosedInvocationBody>,
+//         functionModule,
+//       );
+//       break;
+//   }
+
+//   let functionCallbackId = payload?.body?.event?.function?.callback_id;
+
+//   return null;
+// }
