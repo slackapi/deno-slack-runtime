@@ -10,6 +10,7 @@ export const RunViewSubmission = async (
   // deno-lint-ignore no-explicit-any
 ): Promise<any> => {
   const { body, context } = payload;
+  const view = body.view;
   const env = context.variables || {};
   const token = context.bot_access_token || body.bot_access_token || "";
 
@@ -23,6 +24,7 @@ export const RunViewSubmission = async (
   // TODO: type response here
   // deno-lint-ignore no-explicit-any
   const submissionResp: any = await functionModule.viewSubmission({
+    view,
     body,
     token,
     env,

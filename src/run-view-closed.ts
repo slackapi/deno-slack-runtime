@@ -10,6 +10,7 @@ export const RunViewClosed = async (
   // deno-lint-ignore no-explicit-any
 ): Promise<any> => {
   const { body, context } = payload;
+  const view = body.view;
   const env = context.variables || {};
   const token = context.bot_access_token || body.bot_access_token || "";
 
@@ -23,6 +24,7 @@ export const RunViewClosed = async (
   // TODO: type response here
   // deno-lint-ignore no-explicit-any
   const closedResp: any = await functionModule.viewClosed({
+    view,
     body,
     token,
     env,
