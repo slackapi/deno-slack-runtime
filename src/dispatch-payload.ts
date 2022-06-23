@@ -1,10 +1,16 @@
 import { LoadFunctionModule } from "./load-function-module.ts";
 import { RunFunction } from "./run-function.ts";
+import { RunBlockAction } from "./run-block-actions.ts";
+import { RunViewSubmission } from "./run-view-submission.ts";
+import { RunViewClosed } from "./run-view-closed.ts";
 import {
+  BlockActionInvocationBody,
   EventTypes,
   FunctionInvocationBody,
   InvocationPayload,
   ValidEventType,
+  ViewClosedInvocationBody,
+  ViewSubmissionInvocationBody,
 } from "./types.ts";
 
 // Given a function callback_id, returns a set of potential function files to check
@@ -24,7 +30,15 @@ export const DispatchPayload = async (
   }
 
   const validEventType: ValidEventType = eventType;
-  const functionCallbackId = payload?.body?.event?.function?.callback_id;
+  let functionCallbackId = payload?.body?.event?.function?.callback_id;
+
+  // ---------------------------------------------------------------
+  //TODO: Remove this once all supported payloads include it
+  // hard-coding missing function callback_id for testing purposes
+  if (!functionCallbackId) {
+    functionCallbackId = "approval";
+  }
+  // ---------------------------------------------------------------
 
   if (!functionCallbackId) {
     throw new Error("Could not find the function callback_id in the payload");
@@ -53,6 +67,25 @@ export const DispatchPayload = async (
     case EventTypes.FUNCTION_EXECUTED:
       resp = await RunFunction(
         payload as InvocationPayload<FunctionInvocationBody>,
+        functionModule,
+      );
+      break;
+    case EventTypes.BLOCK_ACTIONS:
+      resp = await RunBlockAction(
+        payload as InvocationPayload<BlockActionInvocationBody>,
+        functionModule,
+      );
+      break;
+    case EventTypes.VIEW_SUBMISSION:
+      resp = await RunViewSubmission(
+        payload as InvocationPayload<ViewSubmissionInvocationBody>,
+        functionModule,
+      );
+      break;
+    case EventTypes.VIEW_CLOSED:
+      console.log("view_closed event", JSON.stringify(payload));
+      resp = await RunViewClosed(
+        payload as InvocationPayload<ViewClosedInvocationBody>,
         functionModule,
       );
       break;
