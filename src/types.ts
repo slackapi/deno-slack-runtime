@@ -6,13 +6,15 @@ type FunctionOutputInputValues = {
   [key: string]: unknown;
 };
 
-export type InvocationPayload<Body> = {
+export type InvocationPayload<Body extends ValidInvocationPayloadBody> = {
   body: Body;
   context: {
     bot_access_token: string;
     variables: EnvironmentVariables;
   };
 };
+
+export type ValidInvocationPayloadBody = FunctionInvocationBody;
 
 export type FunctionInvocationBody = {
   event: {
@@ -52,8 +54,6 @@ export type FunctionHandler = AsyncFunctionHandler | SyncFunctionHandler;
 // This is the interface a developer-provided function module should adhere to
 export type FunctionModule = {
   default: FunctionHandler;
-  //TODO: add support for an `actions()` handler block_actions could route too
-  // In order to do this, block_actions would need to include the function callback_id
 };
 
 export type BaseResponse = {
@@ -81,3 +81,9 @@ export interface ISlackAPIClient {
    */
   call(method: string, data: { [key: string]: unknown }): Promise<BaseResponse>;
 }
+
+export const EventTypes = {
+  FUNCTION_EXECUTED: "function_executed",
+} as const;
+
+export type ValidEventType = typeof EventTypes[keyof typeof EventTypes];

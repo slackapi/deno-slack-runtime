@@ -1,6 +1,5 @@
-import { assertEquals, assertRejects } from "../dev_deps.ts";
+import { assertEquals, assertExists, assertRejects } from "../dev_deps.ts";
 import { LoadFunctionModule } from "../load-function-module.ts";
-import { generatePayload } from "./test_utils.ts";
 
 Deno.test("LoadFunctionModule function", async (t) => {
   const origDir = Deno.cwd();
@@ -10,25 +9,33 @@ Deno.test("LoadFunctionModule function", async (t) => {
   const functionsDir = `${fixturesDir}/functions`;
 
   await t.step(
-    "should throw if a callback_id in the payload does not exist",
+    "should return null if no files are provided",
     async () => {
-      await assertRejects(
-        async () => {
-          const payload = generatePayload("funky");
-          payload.body.event.function.callback_id = "";
-          return await LoadFunctionModule(functionsDir, payload);
-        },
-        Error,
-        "No callback_id provided in payload!",
-      );
+      const fnModule = await LoadFunctionModule([]);
+      assertEquals(fnModule, null);
     },
   );
 
+  await t.step("should load the correct file when given multiple", async () => {
+    const tsModule = await LoadFunctionModule(
+      [
+        `${functionsDir}/funky.js`,
+        `${functionsDir}/funky.ts`,
+      ],
+    );
+    assertExists(tsModule);
+    assertEquals(
+      tsModule.default.name,
+      "funkyTS",
+      "typescript file not loaded",
+    );
+  });
+
   await t.step("should load typescript file if exists", async () => {
     const tsModule = await LoadFunctionModule(
-      functionsDir,
-      generatePayload("funky"),
+      [`${functionsDir}/funky.ts`],
     );
+    assertExists(tsModule);
     assertEquals(
       tsModule.default.name,
       "funkyTS",
@@ -38,9 +45,9 @@ Deno.test("LoadFunctionModule function", async (t) => {
 
   await t.step("should load javascript file if exists", async () => {
     const jsModule = await LoadFunctionModule(
-      functionsDir,
-      generatePayload("wacky"),
+      [`${functionsDir}/wacky.js`],
     );
+    assertExists(jsModule);
     assertEquals(
       jsModule.default.name,
       "wackyJS",
@@ -49,14 +56,12 @@ Deno.test("LoadFunctionModule function", async (t) => {
   });
 
   await t.step("should throw if does not exist", async () => {
-    await assertRejects(
-      async () => {
-        return await LoadFunctionModule(
-          functionsDir,
-          generatePayload("nonexistent"),
-        );
-      },
-      Error,
+    const jsModule = await LoadFunctionModule(
+      [`${functionsDir}/nonexistnent.ts`],
+    );
+    assertEquals(
+      jsModule,
+      null,
       "Could not load function module for function: nonexistent",
     );
   });
@@ -65,11 +70,10 @@ Deno.test("LoadFunctionModule function", async (t) => {
     await assertRejects(
       async () => {
         return await LoadFunctionModule(
-          functionsDir,
-          generatePayload("syntaxerror"),
+          [`${functionsDir}/syntaxerror.ts`],
         );
       },
-      Error,
+      TypeError,
       "[ERROR]",
     );
   });
@@ -80,8 +84,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
       await assertRejects(
         async () => {
           return await LoadFunctionModule(
-            functionsDir,
-            generatePayload("importerror"),
+            [`${functionsDir}/importerror.ts`],
           );
         },
         Error,
