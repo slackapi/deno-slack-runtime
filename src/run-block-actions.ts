@@ -12,8 +12,10 @@ export const RunBlockAction = async (
   const { body, context } = payload;
   const env = context.variables || {};
   const token = body.bot_access_token || context.bot_access_token || "";
+  const inputs = body.function_data?.inputs || {};
 
   if (!functionModule.blockActions) {
+    // TODO: We may want to return an empty ack response here instead of throwing an error, check with what Bolt does
     throw new Error(
       "Received block_actions payload but function does not define any actions handlers",
     );
@@ -26,6 +28,7 @@ export const RunBlockAction = async (
     action: body.actions[0],
     body,
     token,
+    inputs,
     env,
   });
 

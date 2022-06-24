@@ -2,9 +2,10 @@ type EnvironmentVariables = {
   [key: string]: string;
 };
 
-type FunctionOutputInputValues = {
+type FunctionInputValues = {
   [key: string]: unknown;
 };
+type FunctionOutputValues = FunctionInputValues;
 
 export type InvocationPayload<Body extends ValidInvocationPayloadBody> = {
   body: Body;
@@ -28,7 +29,7 @@ export type FunctionInvocationBody = {
       callback_id: string;
     };
     function_execution_id: string;
-    inputs: FunctionOutputInputValues;
+    inputs: FunctionInputValues;
     bot_access_token?: string;
   };
 };
@@ -37,6 +38,7 @@ export type BlockActionInvocationBody = {
   type: "block_actions";
   actions: BlockAction[];
   bot_access_token?: string;
+  function_data?: FunctionData;
   // deno-lint-ignore no-explicit-any
   [key: string]: any;
 };
@@ -45,6 +47,7 @@ export type ViewClosedInvocationBody = {
   type: "view_closed";
   view: View;
   bot_access_token?: string;
+  function_data?: FunctionData;
   // deno-lint-ignore no-explicit-any
   [key: string]: any;
 };
@@ -53,20 +56,29 @@ export type ViewSubmissionInvocationBody = {
   type: "view_submission";
   view: View;
   bot_access_token?: string;
+  function_data?: FunctionData;
   // deno-lint-ignore no-explicit-any
   [key: string]: any;
+};
+
+type FunctionData = {
+  function: {
+    callback_id: string;
+  };
+  execution_id: string;
+  inputs: FunctionInputValues;
 };
 
 // TODO: type this to account for variable return options?
 export type FunctionHandlerReturnArgs = {
   completed?: boolean;
-  outputs?: FunctionOutputInputValues;
+  outputs?: FunctionOutputValues;
   error?: string;
 };
 
 export type FunctionHandlerArgs = {
   env: EnvironmentVariables;
-  inputs: FunctionOutputInputValues;
+  inputs: FunctionInputValues;
   token: string;
   event: FunctionInvocationBody["event"];
 };
@@ -102,6 +114,7 @@ type ViewClosedHandlerArgs = {
   view: View;
   body: ViewClosedInvocationBody;
   token: string;
+  inputs: FunctionInputValues;
   env: EnvironmentVariables;
 };
 
@@ -115,6 +128,7 @@ type ViewSubmissionHandlerArgs = {
   view: View;
   body: ViewSubmissionInvocationBody;
   token: string;
+  inputs: FunctionInputValues;
   env: EnvironmentVariables;
 };
 
@@ -131,6 +145,7 @@ export type BlockActionsHandlerArgs = {
   action: BlockAction;
   body: BlockActionInvocationBody;
   token: string;
+  inputs: FunctionInputValues;
   env: EnvironmentVariables;
 };
 

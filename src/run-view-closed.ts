@@ -13,6 +13,7 @@ export const RunViewClosed = async (
   const view = body.view;
   const env = context.variables || {};
   const token = body.bot_access_token || context.bot_access_token || "";
+  const inputs = body.function_data?.inputs || {};
 
   if (!functionModule.viewClosed) {
     throw new Error(
@@ -27,6 +28,7 @@ export const RunViewClosed = async (
     view,
     body,
     token,
+    inputs,
     env,
   });
 

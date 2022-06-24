@@ -9,6 +9,7 @@ import {
   FunctionInvocationBody,
   InvocationPayload,
   ValidEventType,
+  ValidInvocationPayloadBody,
   ViewClosedInvocationBody,
   ViewSubmissionInvocationBody,
 } from "./types.ts";
@@ -30,12 +31,15 @@ export const DispatchPayload = async (
   }
 
   const validEventType: ValidEventType = eventType;
-  let functionCallbackId = payload?.body?.event?.function?.callback_id;
+  let functionCallbackId = getFunctionCallbackID(validEventType, payload);
 
   // ---------------------------------------------------------------
   //TODO: Remove this once all supported payloads include it
   // hard-coding missing function callback_id for testing purposes
   if (!functionCallbackId) {
+    console.log(
+      "no function callback_id found, hard-coding to approval for testing purposes",
+    );
     functionCallbackId = "approval";
   }
   // ---------------------------------------------------------------
@@ -83,7 +87,6 @@ export const DispatchPayload = async (
       );
       break;
     case EventTypes.VIEW_CLOSED:
-      console.log("view_closed event", JSON.stringify(payload));
       resp = await RunViewClosed(
         payload as InvocationPayload<ViewClosedInvocationBody>,
         functionModule,
@@ -93,3 +96,25 @@ export const DispatchPayload = async (
 
   return resp || {};
 };
+
+function getFunctionCallbackID(
+  eventType: ValidEventType,
+  payload: InvocationPayload<ValidInvocationPayloadBody>,
+): string {
+  switch (eventType) {
+    case EventTypes.FUNCTION_EXECUTED:
+      return (payload as InvocationPayload<FunctionInvocationBody>)?.body?.event
+        ?.function?.callback_id ?? "";
+    case EventTypes.BLOCK_ACTIONS:
+      return (payload as InvocationPayload<BlockActionInvocationBody>)?.body
+        ?.function_data?.function?.callback_id ?? "";
+    case EventTypes.VIEW_CLOSED:
+      return (payload as InvocationPayload<ViewClosedInvocationBody>)?.body
+        ?.function_data?.function?.callback_id ?? "";
+    case EventTypes.VIEW_SUBMISSION:
+      return (payload as InvocationPayload<ViewSubmissionInvocationBody>)?.body
+        ?.function_data?.function?.callback_id ?? "";
+    default:
+      return "";
+  }
+}
