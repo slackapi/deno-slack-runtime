@@ -25,15 +25,15 @@ You also have the option to [override this hook](https://github.com/slackapi/den
 {
   "hooks": {
     /* ... */
-    "start": "deno run -q --unstable --config=deno.jsonc --allow-read --allow-net file:///<path-to-your-local-repo>/local-run.ts"
+    "start": "deno run -q --config=deno.jsonc --allow-read --allow-net file:///<path-to-your-local-repo>/local-run.ts"
   }
 }
 ```
 
 The script may be one of the following, depending on which mode you are operating this library in:
 
-1. Explicit function directory as argument: `deno run -q --unstable --config=deno.jsonc --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.6/mod.ts ./<required-function-directory>`
-2. Local project with a manifest file: `deno run -q --unstable --config=deno.jsonc --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.6/local-run.ts`
+1. Explicit function directory as argument: `deno run -q --config=deno.jsonc --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.6/mod.ts ./<required-function-directory>`
+2. Local project with a manifest file: `deno run -q --config=deno.jsonc --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.6/local-run.ts`
 
 ⚠️ Don't forget to update the version specifier in the URL inside the above commands to match the version you want to test! You can also drop the `@` and the version specifier to use the latest released version. You can also use the `file:///` protocol to point to a version present on your local filesystem.
 
@@ -41,7 +41,7 @@ The script may be one of the following, depending on which mode you are operatin
 
 You can also invoke this library directly from the command line:
 
-    deno run -q --unstable --config=deno.jsonc --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.6/mod.ts ./<required-function-directory>
+    deno run -q --config=deno.jsonc --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.6/mod.ts ./<required-function-directory>
 
 ## Running Tests
 
