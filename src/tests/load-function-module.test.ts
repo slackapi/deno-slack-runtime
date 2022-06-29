@@ -31,6 +31,21 @@ Deno.test("LoadFunctionModule function", async (t) => {
     );
   });
 
+  await t.step("should load the js file if ts file is invalid", async () => {
+    const jsModule = await LoadFunctionModule(
+      [
+        `${functionsDir}/badFile.ts`,
+        `${functionsDir}/wacky.js`,
+      ],
+    );
+    assertExists(jsModule);
+    assertEquals(
+      jsModule.default.name,
+      "wackyJS",
+      "javascript file not loaded over invalid typescript file",
+    );
+  });
+
   await t.step("should load typescript file if exists", async () => {
     const tsModule = await LoadFunctionModule(
       [`${functionsDir}/funky.ts`],
