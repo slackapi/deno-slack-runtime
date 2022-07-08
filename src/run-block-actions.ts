@@ -15,9 +15,12 @@ export const RunBlockAction = async (
   const inputs = body.function_data?.inputs || {};
 
   if (!functionModule.blockActions) {
-    throw new Error(
-      "Received block_actions payload but function does not define any actions handlers",
+    console.log(
+      "Received block_actions payload but the function does not define a blockActions handler",
     );
+
+    // Return an ack response here by default
+    return {};
   }
 
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process
