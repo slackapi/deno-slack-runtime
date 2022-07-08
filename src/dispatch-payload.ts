@@ -31,18 +31,7 @@ export const DispatchPayload = async (
   }
 
   const validEventType: ValidEventType = eventType;
-  let functionCallbackId = getFunctionCallbackID(validEventType, payload);
-
-  // ---------------------------------------------------------------
-  //TODO: Remove this once all supported payloads include it
-  // hard-coding missing function callback_id for testing purposes
-  if (!functionCallbackId) {
-    console.log(
-      "no function callback_id found, hard-coding to approval for testing purposes",
-    );
-    functionCallbackId = "approval";
-  }
-  // ---------------------------------------------------------------
+  const functionCallbackId = getFunctionCallbackID(validEventType, payload);
 
   if (!functionCallbackId) {
     throw new Error("Could not find the function callback_id in the payload");
