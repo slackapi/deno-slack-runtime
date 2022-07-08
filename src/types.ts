@@ -17,8 +17,6 @@ export type InvocationPayload<Body extends ValidInvocationPayloadBody> = {
 
 export type ValidInvocationPayloadBody =
   | BlockActionInvocationBody
-  | ViewSubmissionInvocationBody
-  | ViewClosedInvocationBody
   | FunctionInvocationBody;
 
 // Invocation Bodies
@@ -37,24 +35,6 @@ export type FunctionInvocationBody = {
 export type BlockActionInvocationBody = {
   type: "block_actions";
   actions: BlockAction[];
-  bot_access_token?: string;
-  function_data?: FunctionData;
-  // deno-lint-ignore no-explicit-any
-  [key: string]: any;
-};
-
-export type ViewClosedInvocationBody = {
-  type: "view_closed";
-  view: View;
-  bot_access_token?: string;
-  function_data?: FunctionData;
-  // deno-lint-ignore no-explicit-any
-  [key: string]: any;
-};
-
-export type ViewSubmissionInvocationBody = {
-  type: "view_submission";
-  view: View;
   bot_access_token?: string;
   function_data?: FunctionData;
   // deno-lint-ignore no-explicit-any
@@ -93,49 +73,14 @@ export type FunctionHandler = {
 export type FunctionModule = {
   default: FunctionHandler;
   blockActions?: BlockActionsHandler;
-  viewSubmission?: ViewSubmissionHandler;
-  viewClosed?: ViewClosedHandler;
 };
 
 export const EventTypes = {
   FUNCTION_EXECUTED: "function_executed",
   BLOCK_ACTIONS: "block_actions",
-  VIEW_SUBMISSION: "view_submission",
-  VIEW_CLOSED: "view_closed",
 } as const;
 
 export type ValidEventType = typeof EventTypes[keyof typeof EventTypes];
-
-// --- View Closed Types --- //
-// deno-lint-ignore no-explicit-any
-type View = any;
-
-type ViewClosedHandlerArgs = {
-  view: View;
-  body: ViewClosedInvocationBody;
-  token: string;
-  inputs: FunctionInputValues;
-  env: EnvironmentVariables;
-};
-
-type ViewClosedHandler = {
-  // deno-lint-ignore no-explicit-any
-  (args: ViewClosedHandlerArgs): Promise<any> | any;
-};
-
-// --- View Submission Types --- //
-type ViewSubmissionHandlerArgs = {
-  view: View;
-  body: ViewSubmissionInvocationBody;
-  token: string;
-  inputs: FunctionInputValues;
-  env: EnvironmentVariables;
-};
-
-type ViewSubmissionHandler = {
-  // deno-lint-ignore no-explicit-any
-  (args: ViewSubmissionHandlerArgs): Promise<any> | any;
-};
 
 // --- Block Actions Types -- //
 // deno-lint-ignore no-explicit-any
