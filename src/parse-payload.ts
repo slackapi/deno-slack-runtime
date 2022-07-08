@@ -15,7 +15,6 @@ export const ParsePayload = async (
     // deno-lint-ignore no-explicit-any
     const payload: InvocationPayload<any> = JSON.parse(stdin);
 
-    console.log("fn payload", JSON.stringify(payload, null, 2));
     return payload;
   } catch (e) {
     throw new Error("Error parsing function invocation payload", e);
