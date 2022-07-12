@@ -15,7 +15,7 @@ export const RunBlockAction = async (
   const inputs = body.function_data?.inputs || {};
 
   if (!functionModule.blockActions) {
-    console.log(
+    console.warn(
       "Received block_actions payload but the function does not define a blockActions handler",
     );
 
