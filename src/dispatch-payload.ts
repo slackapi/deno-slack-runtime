@@ -1,10 +1,13 @@
 import { LoadFunctionModule } from "./load-function-module.ts";
 import { RunFunction } from "./run-function.ts";
+import { RunBlockAction } from "./run-block-actions.ts";
 import {
+  BlockActionInvocationBody,
   EventTypes,
   FunctionInvocationBody,
   InvocationPayload,
   ValidEventType,
+  ValidInvocationPayloadBody,
 } from "./types.ts";
 
 // Given a function callback_id, returns a set of potential function files to check
@@ -24,7 +27,7 @@ export const DispatchPayload = async (
   }
 
   const validEventType: ValidEventType = eventType;
-  const functionCallbackId = payload?.body?.event?.function?.callback_id;
+  const functionCallbackId = getFunctionCallbackID(validEventType, payload);
 
   if (!functionCallbackId) {
     throw new Error("Could not find the function callback_id in the payload");
@@ -56,7 +59,29 @@ export const DispatchPayload = async (
         functionModule,
       );
       break;
+    case EventTypes.BLOCK_ACTIONS:
+      resp = await RunBlockAction(
+        payload as InvocationPayload<BlockActionInvocationBody>,
+        functionModule,
+      );
+      break;
   }
 
   return resp || {};
 };
+
+function getFunctionCallbackID(
+  eventType: ValidEventType,
+  payload: InvocationPayload<ValidInvocationPayloadBody>,
+): string {
+  switch (eventType) {
+    case EventTypes.FUNCTION_EXECUTED:
+      return (payload as InvocationPayload<FunctionInvocationBody>)?.body?.event
+        ?.function?.callback_id ?? "";
+    case EventTypes.BLOCK_ACTIONS:
+      return (payload as InvocationPayload<BlockActionInvocationBody>)?.body
+        ?.function_data?.function?.callback_id ?? "";
+    default:
+      return "";
+  }
+}

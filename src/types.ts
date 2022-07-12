@@ -2,9 +2,10 @@ type EnvironmentVariables = {
   [key: string]: string;
 };
 
-type FunctionOutputInputValues = {
+type FunctionInputValues = {
   [key: string]: unknown;
 };
+type FunctionOutputValues = FunctionInputValues;
 
 export type InvocationPayload<Body extends ValidInvocationPayloadBody> = {
   body: Body;
@@ -14,8 +15,11 @@ export type InvocationPayload<Body extends ValidInvocationPayloadBody> = {
   };
 };
 
-export type ValidInvocationPayloadBody = FunctionInvocationBody;
+export type ValidInvocationPayloadBody =
+  | BlockActionInvocationBody
+  | FunctionInvocationBody;
 
+// Invocation Bodies
 export type FunctionInvocationBody = {
   event: {
     type: "function_executed";
@@ -23,67 +27,74 @@ export type FunctionInvocationBody = {
       callback_id: string;
     };
     function_execution_id: string;
-    inputs: FunctionOutputInputValues;
+    inputs: FunctionInputValues;
+    bot_access_token?: string;
   };
+};
+
+export type BlockActionInvocationBody = {
+  type: "block_actions";
+  actions: BlockAction[];
+  bot_access_token?: string;
+  function_data?: FunctionData;
+  // deno-lint-ignore no-explicit-any
+  [key: string]: any;
+};
+
+type FunctionData = {
+  function: {
+    callback_id: string;
+  };
+  execution_id: string;
+  inputs: FunctionInputValues;
 };
 
 // TODO: type this to account for variable return options?
 export type FunctionHandlerReturnArgs = {
   completed?: boolean;
-  outputs?: FunctionOutputInputValues;
+  outputs?: FunctionOutputValues;
   error?: string;
 };
 
-export type FunctionContext = {
+export type FunctionHandlerArgs = {
   env: EnvironmentVariables;
-  inputs: FunctionOutputInputValues;
+  inputs: FunctionInputValues;
   token: string;
   event: FunctionInvocationBody["event"];
 };
 
-export type AsyncFunctionHandler = {
-  (context: FunctionContext): Promise<FunctionHandlerReturnArgs>;
+export type FunctionHandler = {
+  (
+    args: FunctionHandlerArgs,
+  ): Promise<FunctionHandlerReturnArgs> | FunctionHandlerReturnArgs;
 };
-
-export type SyncFunctionHandler = {
-  (context: FunctionContext): FunctionHandlerReturnArgs;
-};
-
-export type FunctionHandler = AsyncFunctionHandler | SyncFunctionHandler;
 
 // This is the interface a developer-provided function module should adhere to
 export type FunctionModule = {
   default: FunctionHandler;
+  blockActions?: BlockActionsHandler;
 };
-
-export type BaseResponse = {
-  /** `true` if the response from the server was successful, `false` otherwise. */
-  ok: boolean;
-  /** Optional error description returned by the server. */
-  error?: string;
-  /** Optional list of warnings returned by the server. */
-  warnings?: string[];
-  /** Optional metadata about the response returned by the server. */
-  response_metadata?: {
-    warnings?: string[];
-    messages?: string[];
-  };
-  [otherOptions: string]: unknown;
-};
-
-export interface ISlackAPIClient {
-  /**
-   * Calls a Slack API method.
-   * @param {string} method The API method name to invoke, i.e. `chat.postMessage`.
-   * @param {Object} data Object representing the data you wish to send along to the Slack API method.
-   * @returns {Promise<BaseResponse>} A Promise that resolves to the data the API responded with.
-   * @throws {Error} Throws an Error if the API response was not OK or a network error occurred.
-   */
-  call(method: string, data: { [key: string]: unknown }): Promise<BaseResponse>;
-}
 
 export const EventTypes = {
   FUNCTION_EXECUTED: "function_executed",
+  BLOCK_ACTIONS: "block_actions",
 } as const;
 
 export type ValidEventType = typeof EventTypes[keyof typeof EventTypes];
+
+// --- Block Actions Types -- //
+// deno-lint-ignore no-explicit-any
+type BlockAction = any;
+
+export type BlockActionsHandlerArgs = {
+  action: BlockAction;
+  body: BlockActionInvocationBody;
+  token: string;
+  inputs: FunctionInputValues;
+  env: EnvironmentVariables;
+};
+
+export type BlockActionsHandler = {
+  // deno-lint-ignore no-explicit-any
+  (args: BlockActionsHandlerArgs): Promise<any> | any;
+};
