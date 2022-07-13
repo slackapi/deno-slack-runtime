@@ -1,6 +1,8 @@
 import { LoadFunctionModule } from "./load-function-module.ts";
 import { RunFunction } from "./run-function.ts";
 import { RunBlockAction } from "./run-block-actions.ts";
+import { RunViewSubmission } from "./run-view-submission.ts";
+import { RunViewClosed } from "./run-view-closed.ts";
 import {
   BlockActionInvocationBody,
   EventTypes,
@@ -8,6 +10,8 @@ import {
   InvocationPayload,
   ValidEventType,
   ValidInvocationPayloadBody,
+  ViewClosedInvocationBody,
+  ViewSubmissionInvocationBody,
 } from "./types.ts";
 
 // Given a function callback_id, returns a set of potential function files to check
@@ -65,6 +69,18 @@ export const DispatchPayload = async (
         functionModule,
       );
       break;
+    case EventTypes.VIEW_SUBMISSION:
+      resp = await RunViewSubmission(
+        payload as InvocationPayload<ViewSubmissionInvocationBody>,
+        functionModule,
+      );
+      break;
+    case EventTypes.VIEW_CLOSED:
+      resp = await RunViewClosed(
+        payload as InvocationPayload<ViewClosedInvocationBody>,
+        functionModule,
+      );
+      break;
   }
 
   return resp || {};
@@ -80,6 +96,12 @@ function getFunctionCallbackID(
         ?.function?.callback_id ?? "";
     case EventTypes.BLOCK_ACTIONS:
       return (payload as InvocationPayload<BlockActionInvocationBody>)?.body
+        ?.function_data?.function?.callback_id ?? "";
+    case EventTypes.VIEW_CLOSED:
+      return (payload as InvocationPayload<ViewClosedInvocationBody>)?.body
+        ?.function_data?.function?.callback_id ?? "";
+    case EventTypes.VIEW_SUBMISSION:
+      return (payload as InvocationPayload<ViewSubmissionInvocationBody>)?.body
         ?.function_data?.function?.callback_id ?? "";
     default:
       return "";
