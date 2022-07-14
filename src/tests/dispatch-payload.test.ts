@@ -8,6 +8,10 @@ Deno.test("DispatchPayload function", async (t) => {
   Deno.chdir(fixturesDir);
   const functionsDir = `${fixturesDir}/functions`;
 
+  await t.step("should be defined", () => {
+    assertExists(DispatchPayload);
+  });
+
   await t.step(
     "return from provided file",
     async () => {
