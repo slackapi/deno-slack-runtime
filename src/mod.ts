@@ -14,12 +14,9 @@ export const run = async function (functionDir: string) {
   // For the hosted runtime, we only support js/ts files named w/ the callback_id
   // They should already be bundled into single files as part of the package uploaded
   const resp = await DispatchPayload(payload, (functionCallbackId) => {
-    const supportedExts = ["js"];
-    const potentialFunctionFiles = supportedExts.map((ext) =>
-      `${functionDir}/${functionCallbackId}.${ext}`
-    );
-
-    return potentialFunctionFiles;
+    /* TODO: change the callback return type to a string instead of a string[] and edit types accordingly */
+    console.log(functionCallbackId);
+    return [`${functionDir}/${functionCallbackId}`];
   });
 
   // The CLI expects a JSON payload to be output to stdout
