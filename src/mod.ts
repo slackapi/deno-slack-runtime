@@ -14,8 +14,6 @@ export const run = async function (functionDir: string) {
   // For the hosted runtime, we only support js files named w/ the callback_id
   // They should already be bundled into single files as part of the package uploaded
   const resp = await DispatchPayload(payload, (functionCallbackId) => {
-    /* TODO: change the callback return type to a string instead of a string[] and edit types accordingly */
-    console.log(functionCallbackId);
     return [`${functionDir}/${functionCallbackId}`];
   });
 
