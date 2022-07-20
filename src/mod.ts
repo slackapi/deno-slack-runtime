@@ -23,10 +23,7 @@ export const run = async function (functionDir: string, input: string) {
     return potentialFunctionFiles;
   });
 
-  // The CLI expects a JSON payload to be output to stdout
-  // This is formalized in the `run` hook of the CLI/SDK Tech Spec:
-  // https://corp.quip.com/0gDvAsqoaaYE/Proposal-CLI-SDK-Interface#temp:C:fOC1991c5aec8994d0db01d26260
-  console.log(JSON.stringify(resp || {}));
+  return JSON.stringify(resp || {});
 };
 
 // Start a http server that listens on the provided port
@@ -69,10 +66,11 @@ const startServer = async function (port: number) {
         const body = await requestEvent.request.text();
         try {
           // run the user code
-          await run(url.pathname.substring(1), body);
+          const response = await run(url.pathname.substring(1), body);
           return requestEvent.respondWith(
-            new Response("OK", {
+            new Response(response, {
               status: 200,
+              headers: { "Content-Type": "application/json" },
             }),
           );
         } catch (e) {
