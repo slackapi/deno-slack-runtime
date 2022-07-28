@@ -37,12 +37,21 @@ The script may be one of the following, depending on which mode you are operatin
 
 ⚠️ Don't forget to update the version specifier in the URL inside the above commands to match the version you want to test! You can also drop the `@` and the version specifier to use the latest released version. You can also use the `file:///` protocol to point to a version present on your local filesystem.
 
-### CLI
+## CLI
 
 You can also invoke this library directly from the command line:
 
-    deno run -q --config=deno.jsonc --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.6/mod.ts ./<required-function-directory>
+    deno run -q --config=deno.jsonc --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.0.6/mod.ts [-p <port>]
 
+Which will start an API Server that will exectue user provided code
+### GET /health
+
+Returns `200 OK` when called, the runtime will use this route to ensure the server is ready to handle requests
+
+### POST /functions
+
+Post Body contains the event payload that used to be read via stdout.
+Returns `200 OK` when there are no errors with finding and executing the expected user code. Will return a `500` otherwise.
 ## Running Tests
 
 If you make changes to this repo, or just want to make sure things are working as desired, you can run:

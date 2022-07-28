@@ -23,7 +23,7 @@ export const run = async function (functionDir: string, input: string) {
     return potentialFunctionFiles;
   });
 
-  return JSON.stringify(resp || {});
+  return resp || {};
 };
 
 // Start a http server that listens on the provided port
@@ -66,16 +66,16 @@ const startServer = async function (port: number) {
         const body = await requestEvent.request.text();
         try {
           // run the user code
-          const response = await run(url.pathname.substring(1), body);
+          const response = await run("functions", body);
           return requestEvent.respondWith(
-            new Response(response, {
+            new Response(JSON.stringify(response), {
               status: 200,
               headers: { "Content-Type": "application/json" },
             }),
           );
         } catch (e) {
           console.error(`Unable to run user supplied module caught error ${e}`);
-          requestEvent.respondWith(
+          return requestEvent.respondWith(
             new Response(`error ${e}`, {
               status: 500,
             }),
