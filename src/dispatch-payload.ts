@@ -39,9 +39,7 @@ export const DispatchPayload = async (
 
   // Let caller resolve the function directory
   const potentialFunctionFiles = getFunctionFiles(functionCallbackId);
-
   const functionModule = await LoadFunctionModule(potentialFunctionFiles);
-
   if (!functionModule) {
     throw new Error(
       `Could not load function module for function: "${functionCallbackId}" in any of the following locations: \n${
