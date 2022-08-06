@@ -1,6 +1,6 @@
 import { DispatchPayload } from "./dispatch-payload.ts";
 import { InvocationPayload } from "./types.ts";
-import { parse } from "./deps.ts";
+import { Application, Context, parse, Router } from "./deps.ts";
 
 export const run = async function (functionDir: string, input: string) {
   // Directory containing functions must be provided when invoking this script.
@@ -26,66 +26,25 @@ export const run = async function (functionDir: string, input: string) {
 //  GET  `/health`    Returns a 200 OK
 //  POST `/functions` Accepts event payload and invokes `run`
 const startServer = async function (port: number) {
-  let server;
-  try {
-    server = Deno.listen({ port });
-  } catch (e) {
-    throw new Error(`Unable to listen on ${port}, got ${e}`);
-  }
-  for await (const conn of server) {
-    // In order to not be blocking, we need to handle each connection individually
-    // without awaiting the function
-    serveHttp(conn);
-  }
+  const router = new Router();
+  router.get("/health", (ctx: Context) => {
+    ctx.response.body = "OK";
+  });
+  router.post("/function", async (ctx: Context) => {
+    // run the user code
+    const body = ctx.request.body();
+    const response = await run("functions", JSON.stringify(body.value));
+    ctx.response.body = response;
+  });
 
-  async function serveHttp(conn: Deno.Conn) {
-    // This "upgrades" a network connection into an HTTP connection.
-    const httpConn = Deno.serveHttp(conn);
-    // Each request sent over the HTTP connection will be yielded as an async
-    // iterator from the HTTP connection.
-    for await (const requestEvent of httpConn) {
-      // The native HTTP server uses the web standard `Request` and `Response`
-      // objects.
-
-      const url = new URL(requestEvent.request.url);
-      // A health check route
-      if (requestEvent.request.method == "GET" && url.pathname == "/health") {
-        return requestEvent.respondWith(
-          new Response("OK", {
-            status: 200,
-          }),
-        );
-      } else if (
-        requestEvent.request.method == "POST" && url.pathname == "/functions"
-      ) {
-        const body = await requestEvent.request.text();
-        try {
-          // run the user code
-          const response = await run("functions", body);
-          return requestEvent.respondWith(
-            new Response(JSON.stringify(response), {
-              status: 200,
-              headers: { "Content-Type": "application/json" },
-            }),
-          );
-        } catch (e) {
-          console.error(`Unable to run user supplied module caught error ${e}`);
-          return requestEvent.respondWith(
-            new Response(`error ${e}`, {
-              status: 500,
-            }),
-          );
-        }
-      }
-      // catch all for any unexpected route
-      requestEvent.respondWith(
-        new Response(
-          `error unknown route ${requestEvent.request.method} ${url.pathname}`,
-          { status: 404 },
-        ),
-      );
-    }
-  }
+  const app = new Application();
+  app.use(router.routes());
+  app.use(router.allowedMethods());
+  app.addEventListener(
+    "listen",
+    (e) => console.log(`Listening on http://localhost:${port}`),
+  );
+  await app.listen({ port });
 };
 
 if (import.meta.main) {
