@@ -2,6 +2,12 @@ import { DispatchPayload } from "./dispatch-payload.ts";
 import { InvocationPayload } from "./types.ts";
 import { Application, Context, parse, Router } from "./deps.ts";
 
+// unhandledrejection.js
+globalThis.addEventListener("unhandledrejection", (e) => {
+  console.log("unhandled rejection at:", e.promise, "reason:", e.reason);
+  e.preventDefault();
+});
+
 export const run = async function (functionDir: string, input: string) {
   // Directory containing functions must be provided when invoking this script.
   if (!functionDir) {
@@ -30,7 +36,7 @@ const startServer = async function (port: number) {
   router.get("/health", (ctx: Context) => {
     ctx.response.body = "OK";
   });
-  router.post("/function", async (ctx: Context) => {
+  router.post("/functions", async (ctx: Context) => {
     // run the user code
     const body = ctx.request.body();
     const response = await run("functions", JSON.stringify(body.value));
@@ -42,7 +48,7 @@ const startServer = async function (port: number) {
   app.use(router.allowedMethods());
   app.addEventListener(
     "listen",
-    (e) => console.log(`Listening on http://localhost:${port}`),
+    function () {},
   );
   await app.listen({ port });
 };
