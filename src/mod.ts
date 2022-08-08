@@ -35,7 +35,9 @@ const startServer = async function (port: number) {
   for await (const conn of server) {
     // In order to not be blocking, we need to handle each connection individually
     // without awaiting the function
-    serveHttp(conn);
+    (async () => {
+      await serveHttp(conn);
+    })();
   }
 
   async function serveHttp(conn: Deno.Conn) {
@@ -50,11 +52,11 @@ const startServer = async function (port: number) {
       const url = new URL(requestEvent.request.url);
       // A health check route
       if (requestEvent.request.method == "GET" && url.pathname == "/health") {
-        return requestEvent.respondWith(
+        await requestEvent.respondWith(
           new Response("OK", {
             status: 200,
           }),
-        );
+        ).catch((e) => console.log(`Uncaught exception during health check: ${e}`));
       } else if (
         requestEvent.request.method == "POST" && url.pathname == "/functions"
       ) {
@@ -62,28 +64,29 @@ const startServer = async function (port: number) {
         try {
           // run the user code
           const response = await run("functions", body);
-          return requestEvent.respondWith(
+          await requestEvent.respondWith(
             new Response(JSON.stringify(response), {
               status: 200,
               headers: { "Content-Type": "application/json" },
             }),
-          );
+          ).catch((e) => console.log(`Uncaught exception after running user code: ${e}`));
         } catch (e) {
           console.error(`Unable to run user supplied module caught error ${e}`);
-          return requestEvent.respondWith(
+          await requestEvent.respondWith(
             new Response(`error ${e}`, {
               status: 500,
             }),
-          );
+          ).catch((e) => console.log(`Uncaught exception: ${e}`));
         }
+      } else {
+        // catch all for any unexpected route
+        await requestEvent.respondWith(
+          new Response(
+            `error unknown route ${requestEvent.request.method} ${url.pathname}`,
+            { status: 404 },
+          ),
+        ).catch((e) => console.log(`Uncaught exception on calling unexpected routes: ${e}`));
       }
-      // catch all for any unexpected route
-      requestEvent.respondWith(
-        new Response(
-          `error unknown route ${requestEvent.request.method} ${url.pathname}`,
-          { status: 404 },
-        ),
-      );
     }
   }
 };
