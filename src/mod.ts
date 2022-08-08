@@ -56,7 +56,9 @@ const startServer = async function (port: number) {
           new Response("OK", {
             status: 200,
           }),
-        ).catch((e) => console.log(`Uncaught exception during health check: ${e}`));
+        ).catch((e) =>
+          console.log(`Uncaught exception during health check: ${e}`)
+        );
       } else if (
         requestEvent.request.method == "POST" && url.pathname == "/functions"
       ) {
@@ -69,7 +71,9 @@ const startServer = async function (port: number) {
               status: 200,
               headers: { "Content-Type": "application/json" },
             }),
-          ).catch((e) => console.log(`Uncaught exception after running user code: ${e}`));
+          ).catch((e) =>
+            console.log(`Uncaught exception after running user code: ${e}`)
+          );
         } catch (e) {
           console.error(`Unable to run user supplied module caught error ${e}`);
           await requestEvent.respondWith(
@@ -85,7 +89,9 @@ const startServer = async function (port: number) {
             `error unknown route ${requestEvent.request.method} ${url.pathname}`,
             { status: 404 },
           ),
-        ).catch((e) => console.log(`Uncaught exception on calling unexpected routes: ${e}`));
+        ).catch((e) =>
+          console.log(`Uncaught exception on calling unexpected routes: ${e}`)
+        );
       }
     }
   }
