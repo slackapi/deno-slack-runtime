@@ -35,7 +35,7 @@ const startServer = async function (port: number) {
   for await (const conn of server) {
     // In order to not be blocking, we need to handle each connection individually
     // without awaiting the function
-    await serveHttp(conn);
+    serveHttp(conn);
   }
 
   async function serveHttp(conn: Deno.Conn) {
