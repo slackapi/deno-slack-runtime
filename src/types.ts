@@ -11,6 +11,7 @@ export type InvocationPayload<Body extends ValidInvocationPayloadBody> = {
   body: Body;
   context: {
     bot_access_token: string;
+    team_id: string;
     variables: EnvironmentVariables;
   };
 };
@@ -80,6 +81,7 @@ export type FunctionHandlerArgs = {
   env: EnvironmentVariables;
   inputs: FunctionInputValues;
   token: string;
+  team_id: string;
   event: FunctionInvocationBody["event"];
 };
 
@@ -114,6 +116,7 @@ export type BlockActionsHandlerArgs = {
   action: BlockAction;
   body: BlockActionInvocationBody;
   token: string;
+  team_id: string;
   inputs: FunctionInputValues;
   env: EnvironmentVariables;
 };
@@ -131,6 +134,7 @@ type ViewClosedHandlerArgs = {
   view: View;
   body: ViewClosedInvocationBody;
   token: string;
+  team_id: string;
   inputs: FunctionInputValues;
   env: EnvironmentVariables;
 };
@@ -145,6 +149,7 @@ type ViewSubmissionHandlerArgs = {
   view: View;
   body: ViewSubmissionInvocationBody;
   token: string;
+  team_id: string;
   inputs: FunctionInputValues;
   env: EnvironmentVariables;
 };

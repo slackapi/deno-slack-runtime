@@ -11,6 +11,7 @@ export const RunFunction = async (
 ): Promise<void> => {
   const { body, context } = payload;
   const env = context.variables || {};
+  const team_id = context.team_id || "";
   const token = body.event?.bot_access_token || context.bot_access_token || "";
   const functionExecutionId = body.event?.function_execution_id;
   const inputs = body.event?.inputs || {};
@@ -28,6 +29,7 @@ export const RunFunction = async (
     inputs,
     env,
     token,
+    team_id,
     event: body.event,
   });
 
