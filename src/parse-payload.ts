@@ -12,11 +12,17 @@ export const ParsePayload = async (
   const stdin = new TextDecoder().decode(stdinContent);
 
   try {
-    // deno-lint-ignore no-explicit-any
-    const payload: InvocationPayload<any> = JSON.parse(stdin);
+    const payload = ParseInvocationPayload(stdin);
 
     return payload;
   } catch (e) {
     throw new Error("Error parsing function invocation payload", e);
   }
+};
+
+export const ParseInvocationPayload = (payloadJSONString: string) => {
+  // deno-lint-ignore no-explicit-any
+  const payload: InvocationPayload<any> = JSON.parse(payloadJSONString);
+
+  return payload;
 };

@@ -1,31 +1,14 @@
-import { DispatchPayload } from "./dispatch-payload.ts";
-import { InvocationPayload } from "./types.ts";
 import { parse } from "./deps.ts";
+import { getFunctionCallback, runWorker } from "./run-worker.ts";
+import { ParseInvocationPayload } from "./parse-payload.ts";
 
-export const run = async function (functionDir: string, input: string) {
-  // Directory containing functions must be provided when invoking this script.
-  if (!functionDir) {
-    throw new Error("Missing function-directory argument!");
-  }
-  functionDir = `file://${await Deno.realPath(functionDir)}`;
-
-  // deno-lint-ignore no-explicit-any
-  const payload: InvocationPayload<any> = JSON.parse(input);
-
-  // For the hosted runtime, we only support js files named w/ the callback_id
-  // They should already be bundled into single files as part of the package uploaded
-  const resp = await DispatchPayload(payload, (functionCallbackId) => {
-    return [`${functionDir}/${functionCallbackId}.js`];
-  });
-
-  return resp || {};
-};
+const DEFAULT_WORKER_TIMEOUT = 15 * 60 * 1000;
 
 // Start a http server that listens on the provided port
 // This server exposes two routes
 //  GET  `/health`    Returns a 200 OK
 //  POST `/functions` Accepts event payload and invokes `run`
-const startServer = async function (port: number) {
+const startServer = async (port: number, timeout: number) => {
   let server;
   try {
     server = Deno.listen({ port });
@@ -62,8 +45,20 @@ const startServer = async function (port: number) {
       ) {
         const body = await requestEvent.request.text();
         try {
+          // find the right function file to run
+          const parsedPayload = ParseInvocationPayload(body);
+          const functionCallbackID = getFunctionCallback(parsedPayload);
+          const functionFile = `file://${await Deno.realPath(
+            "functions",
+          )}/${functionCallbackID}.js`;
+
           // run the user code
-          const response = await run("functions", body);
+          const response = await runWorker(
+            functionCallbackID,
+            functionFile,
+            parsedPayload,
+            timeout,
+          );
           await requestEvent.respondWith(
             new Response(JSON.stringify(response), {
               status: 200,
@@ -106,5 +101,14 @@ if (import.meta.main) {
     throw Error("port must be number");
   }
 
-  await startServer(port);
+  let timeout = DEFAULT_WORKER_TIMEOUT;
+  // Override timeout
+  if (args.timeout) {
+    timeout = Number(args.timeout);
+  }
+  if (!Number.isFinite(timeout)) {
+    throw Error("timeout must be a number");
+  }
+
+  await startServer(port, timeout);
 }

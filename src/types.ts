@@ -153,3 +153,23 @@ type ViewSubmissionHandler = {
   // deno-lint-ignore no-explicit-any
   (args: ViewSubmissionHandlerArgs): Promise<any> | any;
 };
+
+export const WorkerEventTypes = {
+  FunctionEvent: "FunctionEvent",
+} as const;
+
+export type ValidWorkerEventTypes =
+  typeof WorkerEventTypes[keyof typeof WorkerEventTypes];
+
+export type WorkerEventMessage = {
+  type: ValidWorkerEventTypes;
+  functionCallbackID: string;
+  functionFile: string;
+  // deno-lint-ignore no-explicit-any
+  payload: InvocationPayload<any>;
+};
+
+export type WorkerResponseMessage = {
+  // deno-lint-ignore no-explicit-any
+  response: any;
+};

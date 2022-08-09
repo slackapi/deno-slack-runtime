@@ -9,21 +9,16 @@ import {
   FunctionInvocationBody,
   InvocationPayload,
   ValidEventType,
-  ValidInvocationPayloadBody,
   ViewClosedInvocationBody,
   ViewSubmissionInvocationBody,
+  WorkerEventMessage,
 } from "./types.ts";
 
-// Given a function callback_id, returns a set of potential function files to check
-type GetFunctionFilesCallback = {
-  (functionCallbackId: string): string[];
-};
-
 export const DispatchPayload = async (
-  // deno-lint-ignore no-explicit-any
-  payload: InvocationPayload<any>,
-  getFunctionFiles: GetFunctionFilesCallback,
+  message: WorkerEventMessage,
 ) => {
+  const { functionCallbackID, functionFile, payload } = message;
+
   const eventType = payload?.body?.event?.type || payload?.body?.type || "";
 
   if (!Object.values(EventTypes).includes(eventType)) {
@@ -31,20 +26,14 @@ export const DispatchPayload = async (
   }
 
   const validEventType: ValidEventType = eventType;
-  const functionCallbackId = getFunctionCallbackID(validEventType, payload);
-
-  if (!functionCallbackId) {
-    throw new Error("Could not find the function callback_id in the payload");
-  }
 
   // Let caller resolve the function directory
-  const potentialFunctionFiles = getFunctionFiles(functionCallbackId);
-  const functionModule = await LoadFunctionModule(potentialFunctionFiles);
+  // const potentialFunctionFiles = getFunctionFiles(functionCallbackId);
+  // TODO: swap to just a single file arg vs. array of files
+  const functionModule = await LoadFunctionModule([functionFile]);
   if (!functionModule) {
     throw new Error(
-      `Could not load function module for function: "${functionCallbackId}" in any of the following locations: \n${
-        potentialFunctionFiles.join("\n")
-      }\nMake sure your function's "source_file" is relative to your project root.`,
+      `Could not load function module for function: "${functionCallbackID}" in any of the following locations: \n${functionFile}\nMake sure your function's "source_file" is relative to your project root.`,
     );
   }
 
@@ -83,25 +72,3 @@ export const DispatchPayload = async (
 
   return resp || {};
 };
-
-function getFunctionCallbackID(
-  eventType: ValidEventType,
-  payload: InvocationPayload<ValidInvocationPayloadBody>,
-): string {
-  switch (eventType) {
-    case EventTypes.FUNCTION_EXECUTED:
-      return (payload as InvocationPayload<FunctionInvocationBody>)?.body?.event
-        ?.function?.callback_id ?? "";
-    case EventTypes.BLOCK_ACTIONS:
-      return (payload as InvocationPayload<BlockActionInvocationBody>)?.body
-        ?.function_data?.function?.callback_id ?? "";
-    case EventTypes.VIEW_CLOSED:
-      return (payload as InvocationPayload<ViewClosedInvocationBody>)?.body
-        ?.function_data?.function?.callback_id ?? "";
-    case EventTypes.VIEW_SUBMISSION:
-      return (payload as InvocationPayload<ViewSubmissionInvocationBody>)?.body
-        ?.function_data?.function?.callback_id ?? "";
-    default:
-      return "";
-  }
-}

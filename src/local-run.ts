@@ -1,6 +1,6 @@
 import { createManifest, readAll } from "./deps.ts";
 import { ParsePayload } from "./parse-payload.ts";
-import { DispatchPayload } from "./dispatch-payload.ts";
+import { getFunctionCallback, runWorker } from "./run-worker.ts";
 
 export const runLocally = async function () {
   const workingDirectory = Deno.cwd();
@@ -15,22 +15,19 @@ export const runLocally = async function () {
     );
   }
   const payload = await ParsePayload(readAll);
+  const functionCallbackID = getFunctionCallback(payload);
+  const functionDefn = manifest.functions[functionCallbackID];
+  if (!functionDefn) {
+    throw new Error(
+      `No function definition for function callback id ${functionCallbackID} was found in the manifest! manifest.functions: ${manifest.functions}`,
+    );
+  }
+
+  const functionFile = `file://${workingDirectory}/${functionDefn.source_file}`;
 
   // Finds the corresponding function in the manifest definition, and then uses
   // the `source_file` property to determine the function module file location
-  const resp = await DispatchPayload(payload, (functionCallbackId) => {
-    const functionDefn = manifest.functions[functionCallbackId];
-    if (!functionDefn) {
-      throw new Error(
-        `No function definition for function callback id ${functionCallbackId} was found in the manifest! manifest.functions: ${manifest.functions}`,
-      );
-    }
-
-    const functionFile =
-      `file://${workingDirectory}/${functionDefn.source_file}`;
-
-    return [functionFile];
-  });
+  const resp = await runWorker(functionCallbackID, functionFile, payload);
 
   // The CLI expects a JSON payload to be output to stdout
   // This is formalized in the `run` hook of the CLI/SDK Tech Spec:
