@@ -3,6 +3,7 @@ import {
   InvocationPayload,
   ViewSubmissionInvocationBody,
 } from "./types.ts";
+import { UnhandledEventError } from "./run-unhandled-event.ts";
 
 export const RunViewSubmission = async (
   payload: InvocationPayload<ViewSubmissionInvocationBody>,
@@ -17,12 +18,9 @@ export const RunViewSubmission = async (
   const inputs = body.function_data?.inputs || {};
 
   if (!functionModule.viewSubmission) {
-    console.warn(
-      "Received view_submission payload but function does not define a viewSubmission handler",
+    throw new UnhandledEventError(
+      "Received a view_submission payload but the function does not define a viewSubmission handler",
     );
-
-    // Return an ack response here by default
-    return {};
   }
 
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process

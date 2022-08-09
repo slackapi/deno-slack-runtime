@@ -25,7 +25,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
     );
     assertExists(tsModule);
     assertEquals(
-      tsModule.default.name,
+      tsModule.default?.name,
       "funkyTS",
       "typescript file not loaded",
     );
@@ -40,7 +40,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
     );
     assertExists(jsModule);
     assertEquals(
-      jsModule.default.name,
+      jsModule.default?.name,
       "wackyJS",
       "javascript file not loaded over invalid typescript file",
     );
@@ -52,7 +52,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
     );
     assertExists(tsModule);
     assertEquals(
-      tsModule.default.name,
+      tsModule.default?.name,
       "funkyTS",
       "typescript file not loaded",
     );
@@ -64,7 +64,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
     );
     assertExists(jsModule);
     assertEquals(
-      jsModule.default.name,
+      jsModule.default?.name,
       "wackyJS",
       "javascript file not loaded",
     );

@@ -4,9 +4,15 @@ import { RunBlockAction } from "./run-block-actions.ts";
 import { RunViewSubmission } from "./run-view-submission.ts";
 import { RunViewClosed } from "./run-view-closed.ts";
 import {
+  RunUnhandledEvent,
+  UnhandledEventError,
+} from "./run-unhandled-event.ts";
+import {
+  BaseEventInvocationBody,
   BlockActionInvocationBody,
   EventTypes,
   FunctionInvocationBody,
+  FunctionModule,
   InvocationPayload,
   ValidEventType,
   ValidInvocationPayloadBody,
@@ -16,7 +22,7 @@ import {
 
 // Given a function callback_id, returns a set of potential function files to check
 type GetFunctionFilesCallback = {
-  (functionCallbackId: string): string[];
+  (functionCallbackId: string): (string | FunctionModule)[];
 };
 
 export const DispatchPayload = async (
@@ -26,12 +32,7 @@ export const DispatchPayload = async (
 ) => {
   const eventType = payload?.body?.event?.type || payload?.body?.type || "";
 
-  if (!Object.values(EventTypes).includes(eventType)) {
-    throw new Error(`Unsupported event type: "${eventType || "not_found"}"`);
-  }
-
-  const validEventType: ValidEventType = eventType;
-  const functionCallbackId = getFunctionCallbackID(validEventType, payload);
+  const functionCallbackId = getFunctionCallbackID(eventType, payload);
 
   if (!functionCallbackId) {
     throw new Error("Could not find the function callback_id in the payload");
@@ -54,31 +55,48 @@ export const DispatchPayload = async (
   // deno-lint-ignore no-explicit-any
   let resp: any = {};
 
-  switch (validEventType) {
-    case EventTypes.FUNCTION_EXECUTED:
-      resp = await RunFunction(
-        payload as InvocationPayload<FunctionInvocationBody>,
-        functionModule,
-      );
-      break;
-    case EventTypes.BLOCK_ACTIONS:
-      resp = await RunBlockAction(
-        payload as InvocationPayload<BlockActionInvocationBody>,
-        functionModule,
-      );
-      break;
-    case EventTypes.VIEW_SUBMISSION:
-      resp = await RunViewSubmission(
-        payload as InvocationPayload<ViewSubmissionInvocationBody>,
-        functionModule,
-      );
-      break;
-    case EventTypes.VIEW_CLOSED:
-      resp = await RunViewClosed(
-        payload as InvocationPayload<ViewClosedInvocationBody>,
-        functionModule,
-      );
-      break;
+  try {
+    switch (eventType) {
+      case EventTypes.FUNCTION_EXECUTED:
+        resp = await RunFunction(
+          payload as InvocationPayload<FunctionInvocationBody>,
+          functionModule,
+        );
+        break;
+      case EventTypes.BLOCK_ACTIONS:
+        resp = await RunBlockAction(
+          payload as InvocationPayload<BlockActionInvocationBody>,
+          functionModule,
+        );
+        break;
+      case EventTypes.VIEW_SUBMISSION:
+        resp = await RunViewSubmission(
+          payload as InvocationPayload<ViewSubmissionInvocationBody>,
+          functionModule,
+        );
+        break;
+      case EventTypes.VIEW_CLOSED:
+        resp = await RunViewClosed(
+          payload as InvocationPayload<ViewClosedInvocationBody>,
+          functionModule,
+        );
+        break;
+      default:
+        throw new UnhandledEventError(
+          `Received a ${eventType} payload but there is no matching handler for the ${functionCallbackId} function.`,
+        );
+    }
+  } catch (handlerError) {
+    if (handlerError.name === "UnhandledEventError") {
+      // Attempt to run the unhandledEvent handler if present
+      if (handlerError.name === "UnhandledEventError") {
+        resp = await RunUnhandledEvent(payload, functionModule);
+      } else {
+        console.warn(handlerError.message);
+      }
+    } else {
+      throw handlerError;
+    }
   }
 
   return resp || {};
@@ -102,6 +120,7 @@ function getFunctionCallbackID(
       return (payload as InvocationPayload<ViewSubmissionInvocationBody>)?.body
         ?.function_data?.function?.callback_id ?? "";
     default:
-      return "";
+      return (payload as InvocationPayload<BaseEventInvocationBody>)?.body
+        ?.function_data?.function?.callback_id ?? "";
   }
 }
