@@ -2,13 +2,11 @@ import { parse } from "./deps.ts";
 import { getFunctionCallback, runWorker } from "./run-worker.ts";
 import { ParseInvocationPayload } from "./parse-payload.ts";
 
-const DEFAULT_WORKER_TIMEOUT = 15 * 60 * 1000;
-
 // Start a http server that listens on the provided port
 // This server exposes two routes
 //  GET  `/health`    Returns a 200 OK
 //  POST `/functions` Accepts event payload and invokes `run`
-const startServer = async (port: number, timeout: number) => {
+const startServer = async (port: number, timeout?: number) => {
   let server;
   try {
     server = Deno.listen({ port });
@@ -47,15 +45,26 @@ const startServer = async (port: number, timeout: number) => {
       ) {
         console.log("/functions route called");
         const body = await requestEvent.request.text();
-
+        console.log("body", body);
         try {
           // find the right function file to run
           const parsedPayload = ParseInvocationPayload(body);
+          console.log("payload", parsedPayload);
           const functionCallbackID = getFunctionCallback(parsedPayload);
+          console.log("functionCallbackID", functionCallbackID);
+
           const functionFile = `file://${await Deno.realPath(
-            "functions",
+            "/Users/brad.harris/dev/hermes-projects/interactive-approval/dist/functions",
+            // "functions",
           )}/${functionCallbackID}.js`;
 
+          console.log(
+            "running worker",
+            functionCallbackID,
+            functionFile,
+            parsedPayload,
+            timeout,
+          );
           // run the user code
           const response = await runWorker(
             functionCallbackID,
@@ -105,13 +114,13 @@ if (import.meta.main) {
     throw Error("port must be number");
   }
 
-  let timeout = DEFAULT_WORKER_TIMEOUT;
+  let timeout: number | undefined;
   // Override timeout
   if (args.timeout) {
     timeout = Number(args.timeout);
-  }
-  if (!Number.isFinite(timeout)) {
-    throw Error("timeout must be a number");
+    if (!Number.isFinite(timeout)) {
+      throw Error("timeout must be a number");
+    }
   }
 
   await startServer(port, timeout);

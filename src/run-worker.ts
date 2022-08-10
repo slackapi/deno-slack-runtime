@@ -12,7 +12,7 @@ import {
   WorkerResponseMessage,
 } from "./types.ts";
 
-const DEFAULT_WORKER_TIMEOUT = 15 * 60 * 1000;
+const DEFAULT_WORKER_TIMEOUT = 15 * 1000;
 
 export const runWorker = async function (
   /** callback_id of the Function */
@@ -31,13 +31,21 @@ export const runWorker = async function (
 
   let timeout: number | undefined;
 
-  const workerPromise = new Promise((resolve) => {
+  const workerPromise = new Promise((resolve, reject) => {
     worker.onmessage = (msg: MessageEvent<WorkerResponseMessage>) => {
       console.log("worker msg receivd", msg);
       if (timeout) {
         clearTimeout(timeout);
       }
       resolve(msg.data.response);
+    };
+
+    worker.onerror = (err) => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+      worker.terminate();
+      reject(err.message);
     };
 
     const workerMessage: WorkerEventMessage = {
@@ -51,18 +59,23 @@ export const runWorker = async function (
   });
 
   const timeoutPromise = new Promise((_resolve, reject) => {
+    console.log("setting timeout", timeoutMS);
     timeout = setTimeout(() => {
+      console.log("timeout reached");
       reject("Function timeout exceeded");
     }, timeoutMS);
   });
 
   try {
+    console.log("awaiting promises...");
     // We kick off the worker and a timeout to terminate the worker if it goes too long
     const response = await Promise.race([workerPromise, timeoutPromise]);
 
+    console.log("promise.race over", response);
+
     return response;
   } catch (err) {
-    console.log(err);
+    console.log("promise.race error caught", err);
     worker.terminate();
 
     return {};
