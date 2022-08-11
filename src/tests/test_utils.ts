@@ -19,7 +19,7 @@ export const generatePayload = (
         inputs: {},
       },
     },
-    context: { bot_access_token: FAKE_ID, variables: {} },
+    context: { bot_access_token: FAKE_ID, team_id: FAKE_ID, variables: {} },
   };
 };
 
@@ -37,7 +37,7 @@ export const generateBlockActionsPayload = (
       },
       bot_access_token: FAKE_ID,
     },
-    context: { bot_access_token: FAKE_ID, variables: {} },
+    context: { bot_access_token: FAKE_ID, team_id: FAKE_ID, variables: {} },
   };
 };
 
@@ -55,7 +55,7 @@ export const generateViewSubmissionPayload = (
       },
       bot_access_token: FAKE_ID,
     },
-    context: { bot_access_token: FAKE_ID, variables: {} },
+    context: { bot_access_token: FAKE_ID, team_id: FAKE_ID, variables: {} },
   };
 };
 
@@ -73,6 +73,6 @@ export const generateViewClosedPayload = (
       },
       bot_access_token: FAKE_ID,
     },
-    context: { bot_access_token: FAKE_ID, variables: {} },
+    context: { bot_access_token: FAKE_ID, team_id: FAKE_ID, variables: {} },
   };
 };

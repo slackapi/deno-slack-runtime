@@ -11,7 +11,7 @@ Deno.test("DispatchPayload function", async (t) => {
       await assertRejects(() =>
         DispatchPayload({
           body: { type: "messinwitcha" },
-          context: { bot_access_token: "12345", variables: {} },
+          context: { bot_access_token: "12345", team_id: "123", variables: {} },
         }, () => [])
       );
     },
@@ -22,7 +22,7 @@ Deno.test("DispatchPayload function", async (t) => {
       await assertRejects(() =>
         DispatchPayload({
           body: { type: "function_executed", event: {} },
-          context: { bot_access_token: "12345", variables: {} },
+          context: { bot_access_token: "12345", team_id: "123", variables: {} },
         }, () => [])
       );
     },
@@ -49,6 +49,7 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
         },
         context: {
           bot_access_token: "",
+          team_id: "",
           variables: {},
         },
       };
@@ -75,6 +76,7 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
         },
         context: {
           bot_access_token: "",
+          team_id: "",
           variables: {},
         },
       };
