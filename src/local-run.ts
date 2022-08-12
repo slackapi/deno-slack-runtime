@@ -3,6 +3,7 @@ import { ParsePayload } from "./parse-payload.ts";
 import { getFunctionCallback, runWorker } from "./run-worker.ts";
 
 export const runLocally = async function () {
+  console.log("local run");
   const workingDirectory = Deno.cwd();
   const manifest = await createManifest({
     manifestOnly: true,
@@ -24,7 +25,7 @@ export const runLocally = async function () {
   }
 
   const functionFile = `file://${workingDirectory}/${functionDefn.source_file}`;
-
+  console.log("running worker", functionCallbackID);
   // Finds the corresponding function in the manifest definition, and then uses
   // the `source_file` property to determine the function module file location
   const resp = await runWorker(functionCallbackID, functionFile, payload);
@@ -36,5 +37,6 @@ export const runLocally = async function () {
 };
 
 if (import.meta.main) {
+  console.log("running locally");
   await runLocally();
 }
