@@ -1,4 +1,5 @@
 import {
+  EventTypes,
   FunctionModule,
   InvocationPayload,
   ViewSubmissionInvocationBody,
@@ -19,7 +20,7 @@ export const RunViewSubmission = async (
 
   if (!functionModule.viewSubmission) {
     throw new UnhandledEventError(
-      "Received a view_submission payload but the function does not define a viewSubmission handler",
+      `Received a ${EventTypes.VIEW_SUBMISSION} payload but the function does not define a viewSubmission handler`,
     );
   }
 

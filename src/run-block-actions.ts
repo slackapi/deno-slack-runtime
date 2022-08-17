@@ -1,5 +1,6 @@
 import {
   BlockActionInvocationBody,
+  EventTypes,
   FunctionModule,
   InvocationPayload,
 } from "./types.ts";
@@ -18,7 +19,7 @@ export const RunBlockAction = async (
 
   if (!functionModule.blockActions) {
     throw new UnhandledEventError(
-      "Received a block_actions payload but the function does not define a blockActions handler",
+      `Received a ${EventTypes.BLOCK_ACTIONS} payload but the function does not define a blockActions handler`,
     );
   }
 

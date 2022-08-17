@@ -1,4 +1,5 @@
 import {
+  EventTypes,
   FunctionModule,
   InvocationPayload,
   ViewClosedInvocationBody,
@@ -19,7 +20,7 @@ export const RunViewClosed = async (
 
   if (!functionModule.viewClosed) {
     throw new UnhandledEventError(
-      "Received a view_closed payload but the function does not define a viewClosed handler",
+      `Received a ${EventTypes.VIEW_CLOSED} payload but the function does not define a viewClosed handler`,
     );
   }
 
