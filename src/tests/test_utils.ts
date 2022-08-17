@@ -39,7 +39,7 @@ export const generateBaseInvocationBody = (
       },
       bot_access_token: FAKE_ID,
     },
-    context: { bot_access_token: FAKE_ID, variables: {} },
+    context: { team_id: FAKE_ID, bot_access_token: FAKE_ID, variables: {} },
   };
 };
 

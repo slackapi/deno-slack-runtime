@@ -119,6 +119,7 @@ export type ValidEventType = typeof EventTypes[keyof typeof EventTypes];
 type UnhandledEventHandlerArgs = {
   body: BaseEventInvocationBody;
   token: string;
+  team_id: string;
   inputs: FunctionInputValues;
   env: EnvironmentVariables;
 };

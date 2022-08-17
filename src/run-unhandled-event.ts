@@ -11,6 +11,7 @@ export const RunUnhandledEvent = async (
 ): Promise<any> => {
   const { body, context } = payload;
   const env = context.variables || {};
+  const team_id = context.team_id || "";
   const token = body.bot_access_token || context.bot_access_token || "";
   const inputs = body.function_data?.inputs || {};
 
@@ -25,6 +26,7 @@ export const RunUnhandledEvent = async (
     env,
     token,
     body,
+    team_id,
   });
 
   return closedResp || {};
