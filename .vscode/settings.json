@@ -5,5 +5,5 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "denoland.vscode-deno"
   },
-  "editor.tabSize": 2,
+  "editor.tabSize": 2
 }
