@@ -324,4 +324,25 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
       });
     },
   );
+
+  await t.step(
+    "console.warn() if no matching handler provided and no unhandledEvent handler provided",
+    async () => {
+      const payload = generateBlockActionsPayload();
+
+      const fnModule = {
+        default: () => ({}),
+      };
+
+      const consoleWarnSpy = mock.spy(console, "warn");
+
+      await DispatchPayload(payload, () => {
+        return [fnModule];
+      });
+
+      mock.assertSpyCalls(consoleWarnSpy, 1);
+
+      consoleWarnSpy.restore();
+    },
+  );
 });

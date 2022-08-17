@@ -89,7 +89,7 @@ export const DispatchPayload = async (
   } catch (handlerError) {
     if (handlerError.name === "UnhandledEventError") {
       // Attempt to run the unhandledEvent handler if present
-      if (handlerError.name === "UnhandledEventError") {
+      if (functionModule.unhandledEvent) {
         resp = await RunUnhandledEvent(payload, functionModule);
       } else {
         console.warn(handlerError.message);

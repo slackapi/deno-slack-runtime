@@ -6,5 +6,4 @@
     "editor.defaultFormatter": "denoland.vscode-deno"
   },
   "editor.tabSize": 2,
-  "deno.suggest.imports.autoDiscover": true,
 }
