@@ -18,7 +18,9 @@ export const RunViewSubmission = async (
   const token = body.bot_access_token || context.bot_access_token || "";
   const inputs = body.function_data?.inputs || {};
 
-  if (!functionModule.viewSubmission) {
+  const handler = functionModule.viewSubmission ||
+    functionModule.default?.viewSubmission;
+  if (!handler) {
     throw new UnhandledEventError(
       `Received a ${EventTypes.VIEW_SUBMISSION} payload but the function does not define a viewSubmission handler`,
     );
@@ -26,7 +28,7 @@ export const RunViewSubmission = async (
 
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process
   // deno-lint-ignore no-explicit-any
-  const submissionResp: any = await functionModule.viewSubmission({
+  const submissionResp: any = await handler({
     inputs,
     env,
     token,
