@@ -15,13 +15,15 @@ export const RunUnhandledEvent = async (
   const token = body.bot_access_token || context.bot_access_token || "";
   const inputs = body.function_data?.inputs || {};
 
-  if (!functionModule.unhandledEvent) {
+  const handler = functionModule.unhandledEvent ||
+    functionModule.default?.unhandledEvent;
+  if (!handler) {
     throw new Error("No unhandledEvent handler");
   }
 
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process
   // deno-lint-ignore no-explicit-any
-  const closedResp: any = await functionModule.unhandledEvent({
+  const closedResp: any = await handler({
     inputs,
     env,
     token,
