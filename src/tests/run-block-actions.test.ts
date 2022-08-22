@@ -1,6 +1,7 @@
-import { assertEquals, assertExists } from "../dev_deps.ts";
+import { assertEquals, assertExists, assertRejects } from "../dev_deps.ts";
 import { RunBlockAction } from "../run-block-actions.ts";
 import { generateBlockActionsPayload } from "./test_utils.ts";
+import { UnhandledEventError } from "../run-unhandled-event.ts";
 
 Deno.test("RunBlockAction function", async (t) => {
   await t.step("should be defined", () => {
@@ -26,16 +27,19 @@ Deno.test("RunBlockAction function", async (t) => {
   });
 
   await t.step(
-    "should return an empty resp if no handler defined",
+    "should throw an error if no handler defined",
     async () => {
       const payload = generateBlockActionsPayload();
 
       const fnModule = {
         default: () => ({}),
       };
-      const resp = await RunBlockAction(payload, fnModule);
 
-      assertEquals(resp, {});
+      await assertRejects(
+        () => RunBlockAction(payload, fnModule),
+        UnhandledEventError,
+        "block_actions",
+      );
     },
   );
 });

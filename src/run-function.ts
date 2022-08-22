@@ -1,9 +1,11 @@
 import { BaseSlackAPIClient } from "./deps.ts";
 import {
+  EventTypes,
   FunctionInvocationBody,
   FunctionModule,
   InvocationPayload,
 } from "./types.ts";
+import { UnhandledEventError } from "./run-unhandled-event.ts";
 
 export const RunFunction = async (
   payload: InvocationPayload<FunctionInvocationBody>,
@@ -15,6 +17,12 @@ export const RunFunction = async (
   const token = body.event?.bot_access_token || context.bot_access_token || "";
   const functionExecutionId = body.event?.function_execution_id;
   const inputs = body.event?.inputs || {};
+
+  if (!functionModule.default) {
+    throw new UnhandledEventError(
+      `Received a ${EventTypes.FUNCTION_EXECUTED} payload but the function does not define a default handler`,
+    );
+  }
 
   const client = new BaseSlackAPIClient(token, {
     slackApiUrl: env["SLACK_API_URL"],

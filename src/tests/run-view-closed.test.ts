@@ -1,6 +1,7 @@
-import { assertEquals, assertExists } from "../dev_deps.ts";
+import { assertEquals, assertExists, assertRejects } from "../dev_deps.ts";
 import { RunViewClosed } from "../run-view-closed.ts";
 import { generateViewClosedPayload } from "./test_utils.ts";
+import { UnhandledEventError } from "../run-unhandled-event.ts";
 
 Deno.test("RunViewClosed function", async (t) => {
   await t.step("should be defined", () => {
@@ -33,9 +34,12 @@ Deno.test("RunViewClosed function", async (t) => {
       const fnModule = {
         default: () => ({}),
       };
-      const resp = await RunViewClosed(payload, fnModule);
 
-      assertEquals(resp, {});
+      await assertRejects(
+        () => RunViewClosed(payload, fnModule),
+        UnhandledEventError,
+        "view_closed",
+      );
     },
   );
 });

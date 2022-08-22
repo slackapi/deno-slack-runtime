@@ -1,4 +1,5 @@
 import {
+  BaseEventInvocationBody,
   BlockActionInvocationBody,
   FunctionInvocationBody,
   InvocationPayload,
@@ -16,10 +17,29 @@ export const generatePayload = (
         type: "function_executed",
         function: { callback_id: id },
         function_execution_id: FAKE_ID,
+        bot_access_token: FAKE_ID,
         inputs: {},
       },
     },
     context: { bot_access_token: FAKE_ID, team_id: FAKE_ID, variables: {} },
+  };
+};
+
+export const generateBaseInvocationBody = (
+  type: string,
+  id?: string,
+): InvocationPayload<BaseEventInvocationBody> => {
+  return {
+    body: {
+      type,
+      function_data: {
+        execution_id: FAKE_ID,
+        function: { callback_id: id || FAKE_ID },
+        inputs: {},
+      },
+      bot_access_token: FAKE_ID,
+    },
+    context: { team_id: FAKE_ID, bot_access_token: FAKE_ID, variables: {} },
   };
 };
 

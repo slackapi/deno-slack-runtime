@@ -1,8 +1,10 @@
 import {
   BlockActionInvocationBody,
+  EventTypes,
   FunctionModule,
   InvocationPayload,
 } from "./types.ts";
+import { UnhandledEventError } from "./run-unhandled-event.ts";
 
 export const RunBlockAction = async (
   payload: InvocationPayload<BlockActionInvocationBody>,
@@ -16,12 +18,9 @@ export const RunBlockAction = async (
   const inputs = body.function_data?.inputs || {};
 
   if (!functionModule.blockActions) {
-    console.warn(
-      "Received block_actions payload but the function does not define a blockActions handler",
+    throw new UnhandledEventError(
+      `Received a ${EventTypes.BLOCK_ACTIONS} payload but the function does not define a blockActions handler`,
     );
-
-    // Return an ack response here by default
-    return {};
   }
 
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process

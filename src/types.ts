@@ -20,7 +20,8 @@ export type ValidInvocationPayloadBody =
   | BlockActionInvocationBody
   | ViewSubmissionInvocationBody
   | ViewClosedInvocationBody
-  | FunctionInvocationBody;
+  | FunctionInvocationBody
+  | BaseEventInvocationBody;
 
 // Invocation Bodies
 export type FunctionInvocationBody = {
@@ -35,31 +36,27 @@ export type FunctionInvocationBody = {
   };
 };
 
-export type BlockActionInvocationBody = {
+// All events other than the main function_executed one have at least these properties
+export type BaseEventInvocationBody = {
+  bot_access_token?: string;
+  function_data?: FunctionData;
+  // deno-lint-ignore no-explicit-any
+  [key: string]: any;
+};
+
+export type BlockActionInvocationBody = BaseEventInvocationBody & {
   type: "block_actions";
   actions: BlockAction[];
-  bot_access_token?: string;
-  function_data?: FunctionData;
-  // deno-lint-ignore no-explicit-any
-  [key: string]: any;
 };
 
-export type ViewClosedInvocationBody = {
+export type ViewClosedInvocationBody = BaseEventInvocationBody & {
   type: "view_closed";
   view: View;
-  bot_access_token?: string;
-  function_data?: FunctionData;
-  // deno-lint-ignore no-explicit-any
-  [key: string]: any;
 };
 
-export type ViewSubmissionInvocationBody = {
+export type ViewSubmissionInvocationBody = BaseEventInvocationBody & {
   type: "view_submission";
   view: View;
-  bot_access_token?: string;
-  function_data?: FunctionData;
-  // deno-lint-ignore no-explicit-any
-  [key: string]: any;
 };
 
 type FunctionData = {
@@ -92,12 +89,22 @@ export type FunctionHandler = {
 };
 
 // This is the interface a developer-provided function module should adhere to
-export type FunctionModule = {
-  default: FunctionHandler;
-  blockActions?: BlockActionsHandler;
-  viewSubmission?: ViewSubmissionHandler;
-  viewClosed?: ViewClosedHandler;
-};
+export type FunctionModule =
+  | {
+    default: FunctionHandler;
+    blockActions?: BlockActionsHandler;
+    viewSubmission?: ViewSubmissionHandler;
+    viewClosed?: ViewClosedHandler;
+    unhandledEvent?: UnhandledEventHandler;
+  }
+  | // Allows for a function module w/ only a single unhandledEvent handler
+  {
+    unhandledEvent: UnhandledEventHandler;
+    default?: FunctionHandler;
+    blockActions?: BlockActionsHandler;
+    viewSubmission?: ViewSubmissionHandler;
+    viewClosed?: ViewClosedHandler;
+  };
 
 export const EventTypes = {
   FUNCTION_EXECUTED: "function_executed",
@@ -107,6 +114,20 @@ export const EventTypes = {
 } as const;
 
 export type ValidEventType = typeof EventTypes[keyof typeof EventTypes];
+
+// --- Unhandled Event Types --- //
+type UnhandledEventHandlerArgs = {
+  body: BaseEventInvocationBody;
+  token: string;
+  team_id: string;
+  inputs: FunctionInputValues;
+  env: EnvironmentVariables;
+};
+
+type UnhandledEventHandler = {
+  // deno-lint-ignore no-explicit-any
+  (args: UnhandledEventHandlerArgs): Promise<any> | any;
+};
 
 // --- Block Actions Types -- //
 // deno-lint-ignore no-explicit-any
