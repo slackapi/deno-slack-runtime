@@ -4,6 +4,8 @@ import { RunBlockAction } from "./run-block-actions.ts";
 import { RunViewSubmission } from "./run-view-submission.ts";
 import { RunViewClosed } from "./run-view-closed.ts";
 import {
+  hasUnhandledEventHandler,
+  isUnhandledEventError,
   RunUnhandledEvent,
   UnhandledEventError,
 } from "./run-unhandled-event.ts";
@@ -87,9 +89,9 @@ export const DispatchPayload = async (
         );
     }
   } catch (handlerError) {
-    if (handlerError.name === "UnhandledEventError") {
-      // Attempt to run the unhandledEvent handler if present
-      if (functionModule.unhandledEvent) {
+    if (isUnhandledEventError(handlerError)) {
+      // Attempt to run the unhandledEvent handler
+      if (hasUnhandledEventHandler(functionModule)) {
         resp = await RunUnhandledEvent(payload, functionModule);
       } else {
         console.warn(handlerError.message);

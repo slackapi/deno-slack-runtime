@@ -4,6 +4,8 @@ import {
   InvocationPayload,
 } from "./types.ts";
 
+export const UNHANDLED_EVENT_ERROR = "UnhandledEventError";
+
 export const RunUnhandledEvent = async (
   payload: InvocationPayload<BaseEventInvocationBody>,
   functionModule: FunctionModule,
@@ -37,6 +39,15 @@ export const RunUnhandledEvent = async (
 export class UnhandledEventError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "UnhandledEventError";
+    this.name = UNHANDLED_EVENT_ERROR;
   }
 }
+
+export const hasUnhandledEventHandler = (functionModule: FunctionModule) => {
+  return !!(functionModule.unhandledEvent ||
+    functionModule.default?.unhandledEvent);
+};
+
+export const isUnhandledEventError = (error: Error) => {
+  return error.name === UNHANDLED_EVENT_ERROR;
+};
