@@ -17,7 +17,9 @@ export const RunBlockAction = async (
   const token = body.bot_access_token || context.bot_access_token || "";
   const inputs = body.function_data?.inputs || {};
 
-  if (!functionModule.blockActions) {
+  const handler = functionModule.blockActions ||
+    functionModule.default?.blockActions;
+  if (!handler) {
     throw new UnhandledEventError(
       `Received a ${EventTypes.BLOCK_ACTIONS} payload but the function does not define a blockActions handler`,
     );
@@ -25,7 +27,7 @@ export const RunBlockAction = async (
 
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process
   // deno-lint-ignore no-explicit-any
-  const actionsResp: any = await functionModule.blockActions({
+  const actionsResp: any = await handler({
     inputs,
     env,
     token,

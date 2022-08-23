@@ -88,23 +88,25 @@ export type FunctionHandler = {
   ): Promise<FunctionHandlerReturnArgs> | FunctionHandlerReturnArgs;
 };
 
+type FunctionHandlers = {
+  blockActions?: BlockActionsHandler;
+  viewSubmission?: ViewSubmissionHandler;
+  viewClosed?: ViewClosedHandler;
+  unhandledEvent?: UnhandledEventHandler;
+};
+
+type MainFunctionHandler = FunctionHandler & FunctionHandlers;
+
 // This is the interface a developer-provided function module should adhere to
 export type FunctionModule =
-  | {
-    default: FunctionHandler;
-    blockActions?: BlockActionsHandler;
-    viewSubmission?: ViewSubmissionHandler;
-    viewClosed?: ViewClosedHandler;
-    unhandledEvent?: UnhandledEventHandler;
-  }
+  | ({
+    default: MainFunctionHandler;
+  } & FunctionHandlers)
   | // Allows for a function module w/ only a single unhandledEvent handler
-  {
+  ({
+    default?: MainFunctionHandler;
     unhandledEvent: UnhandledEventHandler;
-    default?: FunctionHandler;
-    blockActions?: BlockActionsHandler;
-    viewSubmission?: ViewSubmissionHandler;
-    viewClosed?: ViewClosedHandler;
-  };
+  } & Omit<FunctionHandlers, "unhandledEvent">);
 
 export const EventTypes = {
   FUNCTION_EXECUTED: "function_executed",

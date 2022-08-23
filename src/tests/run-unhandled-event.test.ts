@@ -19,6 +19,35 @@ Deno.test("RunUnhandledEvent function", async (t) => {
     assertEquals(resp, { ok: true });
   });
 
+  await t.step("should run nested handler", async () => {
+    const payload = generateBaseInvocationBody("something");
+
+    // deno-lint-ignore no-explicit-any
+    const fnModule: any = {
+      default: () => ({}),
+    };
+    fnModule.default.unhandledEvent = () => ({ ok: true });
+
+    const resp = await RunUnhandledEvent(payload, fnModule);
+
+    assertEquals(resp, { ok: true });
+  });
+
+  await t.step("should run top level handler over nested handler", async () => {
+    const payload = generateBaseInvocationBody("something");
+
+    // deno-lint-ignore no-explicit-any
+    const fnModule: any = {
+      default: () => ({}),
+      unhandledEvent: () => ({ ok: true }),
+    };
+    fnModule.default.unhandledEvent = () => ({ ok: false });
+
+    const resp = await RunUnhandledEvent(payload, fnModule);
+
+    assertEquals(resp, { ok: true });
+  });
+
   await t.step(
     "should throw an error if no handler defined",
     async () => {
