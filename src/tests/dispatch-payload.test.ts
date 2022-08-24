@@ -70,7 +70,9 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
           return [`${functionCallbackId}.js`];
         },
       );
-      assertEquals(fnModule, {});
+
+      const expected = { outputs: { yes: true } };
+      assertEquals(fnModule, expected);
     },
   );
   await t.step(

@@ -1,6 +1,7 @@
 import { createManifest, readAll } from "./deps.ts";
 import { ParsePayload } from "./parse-payload.ts";
 import { DispatchPayload } from "./dispatch-payload.ts";
+import { BaseSlackAPIClient } from "./deps.ts";
 
 export const runLocally = async function () {
   const workingDirectory = Deno.cwd();
@@ -31,6 +32,37 @@ export const runLocally = async function () {
 
     return [functionFile];
   });
+
+  const { body, context } = payload;
+  const env = context.variables || {};
+  const token = body.event?.bot_access_token || context.bot_access_token || "";
+  const functionExecutionId = body.event?.function_execution_id;
+
+  const client = new BaseSlackAPIClient(token, {
+    slackApiUrl: env["SLACK_API_URL"],
+  });
+
+  const {
+    completed = true,
+    outputs = {},
+    error,
+  } = resp;
+
+  // App has indicated there's an unrecoverable error with this function invocation
+  if (error) {
+    await client.apiCall("functions.completeError", {
+      error,
+      function_execution_id: functionExecutionId,
+    });
+  }
+
+  // App has indicated it's function completed successfully
+  if (completed) {
+    await client.apiCall("functions.completeSuccess", {
+      outputs,
+      function_execution_id: functionExecutionId,
+    });
+  }
 
   // The CLI expects a JSON payload to be output to stdout
   // This is formalized in the `run` hook of the CLI/SDK Tech Spec:
