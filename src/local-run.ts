@@ -2,6 +2,7 @@ import { createManifest, readAll } from "./deps.ts";
 import { ParsePayload } from "./parse-payload.ts";
 import { DispatchPayload } from "./dispatch-payload.ts";
 import { BaseSlackAPIClient } from "./deps.ts";
+import { InvocationPayload } from "./types.ts";
 
 export const runLocally = async function () {
   const workingDirectory = Deno.cwd();
@@ -33,6 +34,20 @@ export const runLocally = async function () {
     return [functionFile];
   });
 
+  callCompleteAPI(payload, resp);
+
+  // The CLI expects a JSON payload to be output to stdout
+  // This is formalized in the `run` hook of the CLI/SDK Tech Spec:
+  // https://corp.quip.com/0gDvAsqoaaYE/Proposal-CLI-SDK-Interface#temp:C:fOC1991c5aec8994d0db01d26260
+  console.log(JSON.stringify(resp || {}));
+};
+
+export const callCompleteAPI = async function (
+  // deno-lint-ignore no-explicit-any
+  payload: InvocationPayload<any>,
+  // deno-lint-ignore no-explicit-any
+  resp: any,
+) {
   const { body, context } = payload;
   const env = context.variables || {};
   const token = body.event?.bot_access_token || context.bot_access_token || "";
@@ -63,11 +78,6 @@ export const runLocally = async function () {
       function_execution_id: functionExecutionId,
     });
   }
-
-  // The CLI expects a JSON payload to be output to stdout
-  // This is formalized in the `run` hook of the CLI/SDK Tech Spec:
-  // https://corp.quip.com/0gDvAsqoaaYE/Proposal-CLI-SDK-Interface#temp:C:fOC1991c5aec8994d0db01d26260
-  console.log(JSON.stringify(resp || {}));
 };
 
 if (import.meta.main) {
