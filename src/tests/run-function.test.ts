@@ -1,6 +1,7 @@
-import { assertEquals, assertExists } from "../dev_deps.ts";
+import { assertEquals, assertExists, assertRejects } from "../dev_deps.ts";
 import { RunFunction } from "../run-function.ts";
 import { generatePayload } from "./test_utils.ts";
+import { UnhandledEventError } from "../run-unhandled-event.ts";
 
 Deno.test("RunFunction function", async (t) => {
   await t.step("should be defined", () => {
@@ -40,6 +41,23 @@ Deno.test("RunFunction function", async (t) => {
       const resp = await RunFunction(payload, errorFnModule);
 
       assertEquals(resp, errors);
+    },
+  );
+
+  await t.step(
+    "should return an empty resp if no handler defined",
+    async () => {
+      const payload = generatePayload("someid");
+
+      const fnModule = {
+        unhandledEvent: () => ({}),
+      };
+
+      await assertRejects(
+        () => RunFunction(payload, fnModule),
+        UnhandledEventError,
+        "function_executed",
+      );
     },
   );
 });
