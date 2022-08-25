@@ -36,8 +36,14 @@ export const DispatchPayload = async (
 
   const functionCallbackId = getFunctionCallbackID(eventType, payload);
 
+  // If we can't find a callback_id, we'll warn about it, then ack the event so we don't retry.
   if (!functionCallbackId) {
-    throw new Error("Could not find the function callback_id in the payload");
+    console.warn(
+      `Could not find the function callback_id in the payload for an event type of ${
+        eventType || "unknown"
+      }`,
+    );
+    return {};
   }
 
   // Let caller resolve the function directory
