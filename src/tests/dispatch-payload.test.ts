@@ -17,25 +17,70 @@ Deno.test("DispatchPayload function", async (t) => {
     assertExists(DispatchPayload);
   });
   await t.step(
-    "should throw if an unrecognized event type is dispatched",
+    "should throw if an unrecognized event type is dispatched that has a function callback_id",
     async () => {
       await assertRejects(() =>
         DispatchPayload({
-          body: { type: "messinwitcha" },
+          body: {
+            type: "messinwitcha",
+            function_data: { function: { callback_id: "test" } },
+          },
           context: { bot_access_token: "12345", team_id: "123", variables: {} },
         }, () => [])
       );
     },
   );
   await t.step(
-    "should throw if no function callback_id present in payload",
+    "should warn if no function callback_id present in payload and return an empty response to ack the event",
     async () => {
-      await assertRejects(() =>
-        DispatchPayload({
-          body: { type: "function_executed", event: {} },
-          context: { bot_access_token: "12345", team_id: "123", variables: {} },
-        }, () => [])
-      );
+      const warnSpy = mock.spy(console, "warn");
+
+      const result = await DispatchPayload({
+        body: { type: "function_executed", event: {} },
+        context: { bot_access_token: "12345", team_id: "123", variables: {} },
+      }, () => []);
+
+      mock.assertSpyCalls(warnSpy, 1);
+      const warnMsg = warnSpy.calls[0].args[0] as string;
+      assertEquals(/function_executed/.test(warnMsg), true);
+      assertEquals(result, {});
+
+      warnSpy.restore();
+    },
+  );
+  await t.step(
+    "should warn if no function callback_id present in payload and type is inside event",
+    async () => {
+      const warnSpy = mock.spy(console, "warn");
+
+      const result = await DispatchPayload({
+        body: { event: { type: "some_random_type" } },
+        context: { bot_access_token: "12345", team_id: "123", variables: {} },
+      }, () => []);
+
+      warnSpy.restore();
+
+      mock.assertSpyCalls(warnSpy, 1);
+      const warnMsg = warnSpy.calls[0].args[0] as string;
+      assertEquals(/some_random_type/.test(warnMsg), true);
+      assertEquals(result, {});
+    },
+  );
+  await t.step(
+    "should warn if no function callback_id present in payload and no type present",
+    async () => {
+      const warnSpy = mock.spy(console, "warn");
+
+      const result = await DispatchPayload({
+        body: {},
+        context: { bot_access_token: "12345", team_id: "123", variables: {} },
+      }, () => []);
+      warnSpy.restore();
+
+      mock.assertSpyCalls(warnSpy, 1);
+      const warnMsg = warnSpy.calls[0].args[0] as string;
+      assertEquals(/unknown/.test(warnMsg), true);
+      assertEquals(result, {});
     },
   );
 });
