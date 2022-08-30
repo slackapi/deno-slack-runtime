@@ -2,6 +2,12 @@ import { DispatchPayload } from "./dispatch-payload.ts";
 import { InvocationPayload } from "./types.ts";
 import { parse } from "./deps.ts";
 
+// unhandledrejection.js
+globalThis.addEventListener("unhandledrejection", (e) => {
+  console.log("unhandled rejection at:", e.promise, "reason:", e.reason);
+  e.preventDefault();
+});
+
 export const run = async function (functionDir: string, input: string) {
   // Directory containing functions must be provided when invoking this script.
   if (!functionDir) {
