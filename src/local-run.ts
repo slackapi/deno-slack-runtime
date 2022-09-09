@@ -29,7 +29,7 @@ export const runLocally = async function () {
     const functionFile =
       `file://${workingDirectory}/${functionDefn.source_file}`;
 
-    return [functionFile];
+    return functionFile;
   });
 
   // The CLI expects a JSON payload to be output to stdout

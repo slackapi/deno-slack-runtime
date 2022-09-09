@@ -1,32 +1,18 @@
 import { FunctionModule } from "./types.ts";
 
-// Given a set of supported files, look for the slack function module file
+/**
+ * Given a string to a path for a module, or a module itself, import the module
+ * and return
+ */
 export const LoadFunctionModule = async (
-  potentialFunctionFiles: (string | FunctionModule)[],
+  potentialFunctionFile: string | FunctionModule,
 ): Promise<FunctionModule | null> => {
-  let functionModuleFile = potentialFunctionFiles.shift();
-  let functionModule: FunctionModule | null = null;
-  while (functionModuleFile) {
-    // If the module itself was provided, just return it.
-    if (typeof functionModuleFile === "object") {
-      functionModule = functionModuleFile;
-      break;
-    }
-
-    // Import function module
-    try {
-      functionModule = await import(functionModuleFile as string);
-      break;
-    } catch (e) {
-      if (e.message.includes("Module not found")) {
-        // Likely means the current file extension being loaded does not exist; move on to the next one
-        functionModuleFile = potentialFunctionFiles.shift();
-      } else {
-        // Any other issue other than module-not-found we should raise to the user.
-        throw e;
-      }
-    }
+  // If the module itself was provided, just return it.
+  if (typeof potentialFunctionFile === "object") {
+    return potentialFunctionFile;
   }
 
-  return functionModule;
+  // Let exceptions be thrown, error would bubble up in both local and
+  // remote running contexts.
+  return await import(potentialFunctionFile as string);
 };

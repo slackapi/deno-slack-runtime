@@ -22,15 +22,15 @@ import {
   ViewSubmissionInvocationBody,
 } from "./types.ts";
 
-// Given a function callback_id, returns a set of potential function files to check
-type GetFunctionFilesCallback = {
-  (functionCallbackId: string): (string | FunctionModule)[];
+// Given a function callback_id, returns a string to a path to a module, or the module directly
+type GetFunctionFileCallback = {
+  (functionCallbackId: string): string | FunctionModule;
 };
 
 export const DispatchPayload = async (
   // deno-lint-ignore no-explicit-any
   payload: InvocationPayload<any>,
-  getFunctionFiles: GetFunctionFilesCallback,
+  getFunctionFile: GetFunctionFileCallback,
 ) => {
   const eventType = payload?.body?.event?.type || payload?.body?.type || "";
 
@@ -40,14 +40,12 @@ export const DispatchPayload = async (
     throw new Error("Could not find the function callback_id in the payload");
   }
 
-  // Let caller resolve the function directory
-  const potentialFunctionFiles = getFunctionFiles(functionCallbackId);
-  const functionModule = await LoadFunctionModule(potentialFunctionFiles);
+  // Let caller resolve how to import the function module
+  const potentialFunctionFile = getFunctionFile(functionCallbackId);
+  const functionModule = await LoadFunctionModule(potentialFunctionFile);
   if (!functionModule) {
     throw new Error(
-      `Could not load function module for function: "${functionCallbackId}" in any of the following locations: \n${
-        potentialFunctionFiles.join("\n")
-      }\nMake sure your function's "source_file" is relative to your project root.`,
+      `Could not load function module for function: "${functionCallbackId}" from ${potentialFunctionFile}\nMake sure your function's "source_file" is relative to your project root.`,
     );
   }
 
