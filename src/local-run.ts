@@ -2,9 +2,17 @@ import { createManifest, readAll } from "./deps.ts";
 import { ParsePayload } from "./parse-payload.ts";
 import { DispatchPayload } from "./dispatch-payload.ts";
 
-export const runLocally = async function () {
+/**
+ * @description Runs an application function locally by dispatching a payload to it after loading it.
+ */
+export const runLocally = async function (
+  create: typeof createManifest,
+  parse: typeof ParsePayload,
+  readStdin: typeof readAll,
+  dispatch: typeof DispatchPayload,
+): Promise<void> {
   const workingDirectory = Deno.cwd();
-  const manifest = await createManifest({
+  const manifest = await create({
     manifestOnly: true,
     log: () => {},
     workingDirectory,
@@ -14,11 +22,11 @@ export const runLocally = async function () {
       `No function definitions were found in the manifest! manifest.functions: ${manifest.functions}`,
     );
   }
-  const payload = await ParsePayload(readAll);
+  const payload = await parse(readStdin);
 
   // Finds the corresponding function in the manifest definition, and then uses
   // the `source_file` property to determine the function module file location
-  const resp = await DispatchPayload(payload, (functionCallbackId) => {
+  const resp = await dispatch(payload, (functionCallbackId) => {
     const functionDefn = manifest.functions[functionCallbackId];
     if (!functionDefn) {
       throw new Error(
@@ -39,5 +47,5 @@ export const runLocally = async function () {
 };
 
 if (import.meta.main) {
-  await runLocally();
+  await runLocally(createManifest, ParsePayload, readAll, DispatchPayload);
 }
