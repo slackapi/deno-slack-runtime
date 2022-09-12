@@ -43,11 +43,6 @@ export const DispatchPayload = async (
   // Let caller resolve how to import the function module
   const potentialFunctionFile = getFunctionFile(functionCallbackId);
   const functionModule = await LoadFunctionModule(potentialFunctionFile);
-  if (!functionModule) {
-    throw new Error(
-      `Could not load function module for function: "${functionCallbackId}" from ${potentialFunctionFile}\nMake sure your function's "source_file" is relative to your project root.`,
-    );
-  }
 
   // This response gets passed back to the layer calling the runtime
   // and potentially used as the response to the incoming request

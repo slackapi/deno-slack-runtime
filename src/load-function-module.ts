@@ -6,7 +6,7 @@ import { FunctionModule } from "./types.ts";
  */
 export const LoadFunctionModule = async (
   potentialFunctionFile: string | FunctionModule,
-): Promise<FunctionModule | null> => {
+): Promise<FunctionModule> => {
   // If the module itself was provided, just return it.
   if (typeof potentialFunctionFile === "object") {
     return potentialFunctionFile;

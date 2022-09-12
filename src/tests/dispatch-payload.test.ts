@@ -19,28 +19,25 @@ Deno.test("DispatchPayload function", async (t) => {
     assertExists(DispatchPayload);
   });
   await t.step(
-    "should throw if an unrecognized event type is dispatched",
-    async () => {
-      await assertRejects(() =>
-        DispatchPayload({
-          body: { type: "messinwitcha" },
-          context: { bot_access_token: "12345", team_id: "123", variables: {} },
-        }, noop)
-      );
-    },
-  );
-  await t.step(
     "should throw if no function callback_id present in payload",
     async () => {
-      await assertRejects(() =>
-        DispatchPayload({
-          body: { type: "function_executed", event: {} },
-          context: { bot_access_token: "12345", team_id: "123", variables: {} },
-        }, noop)
+      await assertRejects(
+        () =>
+          DispatchPayload({
+            body: { type: "function_executed", event: {} },
+            context: {
+              bot_access_token: "12345",
+              team_id: "123",
+              variables: {},
+            },
+          }, noop),
+        Error,
+        "not find the function callback_id",
       );
     },
   );
 });
+
 Deno.test("DispatchPayload function file compatibility tests", async (t) => {
   const origDir = Deno.cwd();
   const __dirname = new URL(".", import.meta.url).pathname;
