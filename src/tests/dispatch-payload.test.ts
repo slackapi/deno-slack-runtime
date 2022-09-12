@@ -48,21 +48,7 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
   await t.step(
     "return from provided file",
     async () => {
-      const payload = {
-        body: {
-          event: {
-            function: {
-              callback_id: `${functionsDir}/wacky`,
-            },
-            type: "function_executed",
-          },
-        },
-        context: {
-          bot_access_token: "",
-          team_id: "",
-          variables: {},
-        },
-      };
+      const payload = generatePayload(`${functionsDir}/wacky`);
       const fnModule = await DispatchPayload(
         payload,
         (functionCallbackId) => {
@@ -75,21 +61,7 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
   await t.step(
     "file not found",
     async () => {
-      const payload = {
-        body: {
-          event: {
-            function: {
-              callback_id: `${functionsDir}/funky`,
-            },
-            type: "function_executed",
-          },
-        },
-        context: {
-          bot_access_token: "",
-          team_id: "",
-          variables: {},
-        },
-      };
+      const payload = generatePayload(`${functionsDir}/funky`);
       await assertRejects(
         async () => {
           return await DispatchPayload(payload, (functionCallbackId) => {
