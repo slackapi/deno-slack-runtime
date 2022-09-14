@@ -1,9 +1,8 @@
-import { assertExists, assertRejects } from "../dev_deps.ts";
+import { assertExists, assertRejects, mock } from "../dev_deps.ts";
 import { runLocally } from "../local-run.ts";
 import { BaseEventInvocationBody, InvocationPayload } from "../types.ts";
 
 const ID = "1234";
-/*
 // deno-lint-ignore no-explicit-any
 const fakeManifest = async (_: any): Promise<any> => {
   return await {
@@ -14,7 +13,6 @@ const fakeManifest = async (_: any): Promise<any> => {
     },
   };
 };
-*/
 const noop = () => Promise.resolve(null);
 // deno-lint-ignore no-explicit-any
 const fakeParse = async (_: any): Promise<InvocationPayload<any>> => {
@@ -25,7 +23,7 @@ const fakeStdinReader = (
   _: any,
 ): Promise<Uint8Array> => Promise.resolve(new Uint8Array(0));
 
-Deno.test("runLocally function", async (t) => {
+Deno.test("runLocally function sad path", async (t) => {
   await t.step("should be defined", () => {
     assertExists(runLocally);
   });
@@ -59,6 +57,23 @@ Deno.test("runLocally function", async (t) => {
         Error,
         "No function definition for function callback id",
       );
+    },
+  );
+});
+
+Deno.test("runLocally function happy path", async (t) => {
+  await t.step(
+    "should feed dispatch response as stringified JSON to stdout",
+    async () => {
+      const consoleLogSpy = mock.spy(console, "log");
+      await runLocally(
+        fakeManifest,
+        fakeParse,
+        fakeStdinReader,
+        () => Promise.resolve({ something: true }),
+      );
+      mock.assertSpyCallArg(consoleLogSpy, 0, 0, `{"something":true}`);
+      consoleLogSpy.restore();
     },
   );
 });
