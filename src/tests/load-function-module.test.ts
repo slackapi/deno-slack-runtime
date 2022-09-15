@@ -8,48 +8,8 @@ Deno.test("LoadFunctionModule function", async (t) => {
   Deno.chdir(fixturesDir);
   const functionsDir = `${fixturesDir}/functions`;
 
-  await t.step(
-    "should return null if no files are provided",
-    async () => {
-      const fnModule = await LoadFunctionModule([]);
-      assertEquals(fnModule, null);
-    },
-  );
-
-  await t.step("should load the correct file when given multiple", async () => {
-    const tsModule = await LoadFunctionModule(
-      [
-        `${functionsDir}/funky.js`,
-        `${functionsDir}/funky.ts`,
-      ],
-    );
-    assertExists(tsModule);
-    assertEquals(
-      tsModule.default?.name,
-      "funkyTS",
-      "typescript file not loaded",
-    );
-  });
-
-  await t.step("should load the js file if ts file is invalid", async () => {
-    const jsModule = await LoadFunctionModule(
-      [
-        `${functionsDir}/badFile.ts`,
-        `${functionsDir}/wacky.js`,
-      ],
-    );
-    assertExists(jsModule);
-    assertEquals(
-      jsModule.default?.name,
-      "wackyJS",
-      "javascript file not loaded over invalid typescript file",
-    );
-  });
-
   await t.step("should load typescript file if exists", async () => {
-    const tsModule = await LoadFunctionModule(
-      [`${functionsDir}/funky.ts`],
-    );
+    const tsModule = await LoadFunctionModule(`${functionsDir}/funky.ts`);
     assertExists(tsModule);
     assertEquals(
       tsModule.default?.name,
@@ -59,9 +19,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
   });
 
   await t.step("should load javascript file if exists", async () => {
-    const jsModule = await LoadFunctionModule(
-      [`${functionsDir}/wacky.js`],
-    );
+    const jsModule = await LoadFunctionModule(`${functionsDir}/wacky.js`);
     assertExists(jsModule);
     assertEquals(
       jsModule.default?.name,
@@ -70,14 +28,12 @@ Deno.test("LoadFunctionModule function", async (t) => {
     );
   });
 
-  await t.step("should throw if does not exist", async () => {
-    const jsModule = await LoadFunctionModule(
-      [`${functionsDir}/nonexistnent.ts`],
-    );
-    assertEquals(
-      jsModule,
-      null,
-      "Could not load function module for function: nonexistent",
+  await t.step("should throw if file does not exist", async () => {
+    await assertRejects(
+      async () => {
+        return await LoadFunctionModule(`${functionsDir}/nonexistnent.ts`);
+      },
+      "Module not found",
     );
   });
 
@@ -85,7 +41,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
     await assertRejects(
       async () => {
         return await LoadFunctionModule(
-          [`${functionsDir}/syntaxerror.ts`],
+          `${functionsDir}/syntaxerror.ts`,
         );
       },
       TypeError,
@@ -99,7 +55,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
       await assertRejects(
         async () => {
           return await LoadFunctionModule(
-            [`${functionsDir}/importerror.ts`],
+            `${functionsDir}/importerror.ts`,
           );
         },
         Error,

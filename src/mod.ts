@@ -15,7 +15,7 @@ export const run = async function (functionDir: string, input: string) {
   // For the hosted runtime, we only support js files named w/ the callback_id
   // They should already be bundled into single files as part of the package uploaded
   const resp = await DispatchPayload(payload, (functionCallbackId) => {
-    return [`${functionDir}/${functionCallbackId}.js`];
+    return `${functionDir}/${functionCallbackId}.js`;
   });
 
   return resp || {};
@@ -60,6 +60,13 @@ const startServer = async function (port: number) {
       } else if (
         requestEvent.request.method == "POST" && url.pathname == "/functions"
       ) {
+        // TODO: does the following need to be wrapped in a try/catch too?
+        // I think the await text() processes the read stream of the request
+        // Could probably blow up if the connection is interrupted
+        // TODO: I think we want to be intentional about how we use try/catch here.
+        // The in-line promise catch() would only catch issues responding to the
+        // request. The wrapping try{} would catch either userland function exceptions
+        // or JSON stringification of userland response.
         const body = await requestEvent.request.text();
         try {
           // run the user code
@@ -70,7 +77,10 @@ const startServer = async function (port: number) {
               headers: { "Content-Type": "application/json" },
             }),
           ).catch((e) =>
-            console.log(`Uncaught exception after running user code: ${e}`)
+            // TODO: where would this log show up? Since this runs on Slack hosting in a lambda context
+            console.log(
+              `Error responding HTTP 200 to webapp request after running user code: ${e}`,
+            )
           );
         } catch (e) {
           console.error(`Unable to run user supplied module caught error ${e}`);
@@ -78,7 +88,9 @@ const startServer = async function (port: number) {
             new Response(`error ${e}`, {
               status: 500,
             }),
-          ).catch((e) => console.log(`Uncaught exception: ${e}`));
+          ).catch((e) =>
+            console.log(`Error responding HTTP 500 to webapp request: ${e}`)
+          );
         }
       } else {
         // catch all for any unexpected route
@@ -88,7 +100,9 @@ const startServer = async function (port: number) {
             { status: 404 },
           ),
         ).catch((e) =>
-          console.log(`Uncaught exception on calling unexpected routes: ${e}`)
+          console.log(
+            `Error responding HTTP 404 to webapp request calling unexpected route: ${e}`,
+          )
         );
       }
     }
