@@ -39,9 +39,9 @@ export const DispatchPayload = async (
   // If we can't find a callback_id, we'll warn about it, then ack the event so we don't retry.
   if (!functionCallbackId) {
     console.warn(
-      `Could not find the function callback_id in the payload for an event type of ${
+      `Could not find the function "callback_id" in the payload for an event type of "${
         eventType || "unknown"
-      }`,
+      }"`,
     );
     return {};
   }
