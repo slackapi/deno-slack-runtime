@@ -1,6 +1,7 @@
 import {
   BaseEventInvocationBody,
   BlockActionInvocationBody,
+  BlockSuggestionInvocationBody,
   FunctionInvocationBody,
   InvocationPayload,
   ViewClosedInvocationBody,
@@ -55,6 +56,26 @@ export const generateBlockActionsPayload = (
         function: { callback_id: id || FAKE_ID },
         inputs: {},
       },
+      bot_access_token: FAKE_ID,
+    },
+    context: { bot_access_token: FAKE_ID, team_id: FAKE_ID, variables: {} },
+  };
+};
+
+export const generateBlockSuggestionPayload = (
+  id?: string,
+): InvocationPayload<BlockSuggestionInvocationBody> => {
+  return {
+    body: {
+      type: "block_suggestion",
+      function_data: {
+        execution_id: FAKE_ID,
+        function: { callback_id: id || FAKE_ID },
+        inputs: {},
+      },
+      action_id: "test",
+      block_id: "test_block",
+      value: "test-query",
       bot_access_token: FAKE_ID,
     },
     context: { bot_access_token: FAKE_ID, team_id: FAKE_ID, variables: {} },

@@ -45,17 +45,21 @@ export type BaseEventInvocationBody = {
 };
 
 export type BlockActionInvocationBody = BaseEventInvocationBody & {
-  type: "block_actions";
+  type: typeof EventTypes.BLOCK_ACTIONS;
   actions: BlockAction[];
 };
 
+export type BlockSuggestionInvocationBody = BaseEventInvocationBody & {
+  type: typeof EventTypes.BLOCK_SUGGESTION;
+};
+
 export type ViewClosedInvocationBody = BaseEventInvocationBody & {
-  type: "view_closed";
+  type: typeof EventTypes.VIEW_CLOSED;
   view: View;
 };
 
 export type ViewSubmissionInvocationBody = BaseEventInvocationBody & {
-  type: "view_submission";
+  type: typeof EventTypes.VIEW_SUBMISSION;
   view: View;
 };
 
@@ -90,6 +94,7 @@ export type FunctionHandler = {
 
 type FunctionHandlers = {
   blockActions?: BlockActionsHandler;
+  blockSuggestion?: BlockSuggestionHandler;
   viewSubmission?: ViewSubmissionHandler;
   viewClosed?: ViewClosedHandler;
   unhandledEvent?: UnhandledEventHandler;
@@ -111,6 +116,7 @@ export type FunctionModule =
 export const EventTypes = {
   FUNCTION_EXECUTED: "function_executed",
   BLOCK_ACTIONS: "block_actions",
+  BLOCK_SUGGESTION: "block_suggestion",
   VIEW_SUBMISSION: "view_submission",
   VIEW_CLOSED: "view_closed",
 } as const;
@@ -147,6 +153,20 @@ export type BlockActionsHandlerArgs = {
 export type BlockActionsHandler = {
   // deno-lint-ignore no-explicit-any
   (args: BlockActionsHandlerArgs): Promise<any> | any;
+};
+
+// --- Block Suggestion Types -- //
+export type BlockSuggestionHandlerArgs = {
+  body: BlockSuggestionInvocationBody;
+  token: string;
+  team_id: string;
+  inputs: FunctionInputValues;
+  env: EnvironmentVariables;
+};
+
+export type BlockSuggestionHandler = {
+  // deno-lint-ignore no-explicit-any
+  (args: BlockSuggestionHandlerArgs): Promise<any> | any;
 };
 
 // --- View Closed Types --- //
