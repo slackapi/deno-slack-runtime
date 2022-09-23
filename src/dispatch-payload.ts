@@ -92,7 +92,7 @@ export const DispatchPayload = async (
         break;
       default:
         throw new UnhandledEventError(
-          `Received a ${eventType} payload but there is no matching handler for the ${functionCallbackId} function.`,
+          `Received an unsupported event of type: "${eventType}" for the ${functionCallbackId} function.`,
         );
     }
   } catch (handlerError) {
