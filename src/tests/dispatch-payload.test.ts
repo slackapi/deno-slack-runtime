@@ -1,6 +1,7 @@
 import {
   assertEquals,
   assertExists,
+  assertMatch,
   assertRejects,
   mock,
 } from "../dev_deps.ts";
@@ -44,7 +45,7 @@ Deno.test("DispatchPayload function", async (t) => {
 
       mock.assertSpyCalls(warnSpy, 1);
       const warnMsg = warnSpy.calls[0].args[0] as string;
-      assertEquals(/function_executed/.test(warnMsg), true);
+      assertMatch(warnMsg, /function_executed/);
       assertEquals(result, {});
 
       warnSpy.restore();
@@ -64,7 +65,7 @@ Deno.test("DispatchPayload function", async (t) => {
 
       mock.assertSpyCalls(warnSpy, 1);
       const warnMsg = warnSpy.calls[0].args[0] as string;
-      assertEquals(/some_random_type/.test(warnMsg), true);
+      assertMatch(warnMsg, /some_random_type/);
       assertEquals(result, {});
     },
   );
@@ -81,7 +82,7 @@ Deno.test("DispatchPayload function", async (t) => {
 
       mock.assertSpyCalls(warnSpy, 1);
       const warnMsg = warnSpy.calls[0].args[0] as string;
-      assertEquals(/unknown/.test(warnMsg), true);
+      assertMatch(warnMsg, /unknown/);
       assertEquals(result, {});
     },
   );
