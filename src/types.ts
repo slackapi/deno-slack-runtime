@@ -34,6 +34,7 @@ export type FunctionInvocationBody = {
     inputs: FunctionInputValues;
     bot_access_token?: string;
   };
+  enterprise_id: string;
 };
 
 // All events other than the main function_executed one have at least these properties
