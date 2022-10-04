@@ -34,6 +34,7 @@ export type FunctionInvocationBody = {
     inputs: FunctionInputValues;
     bot_access_token?: string;
   };
+  enterprise_id: string;
 };
 
 // All events other than the main function_executed one have at least these properties
@@ -83,6 +84,7 @@ export type FunctionHandlerArgs = {
   inputs: FunctionInputValues;
   token: string;
   team_id: string;
+  enterprise_id: string;
   event: FunctionInvocationBody["event"];
 };
 
@@ -128,6 +130,7 @@ type UnhandledEventHandlerArgs = {
   body: BaseEventInvocationBody;
   token: string;
   team_id: string;
+  enterprise_id: string;
   inputs: FunctionInputValues;
   env: EnvironmentVariables;
 };
@@ -146,6 +149,7 @@ export type BlockActionsHandlerArgs = {
   body: BlockActionInvocationBody;
   token: string;
   team_id: string;
+  enterprise_id: string;
   inputs: FunctionInputValues;
   env: EnvironmentVariables;
 };
@@ -178,6 +182,7 @@ type ViewClosedHandlerArgs = {
   body: ViewClosedInvocationBody;
   token: string;
   team_id: string;
+  enterprise_id: string;
   inputs: FunctionInputValues;
   env: EnvironmentVariables;
 };
@@ -193,6 +198,7 @@ type ViewSubmissionHandlerArgs = {
   body: ViewSubmissionInvocationBody;
   token: string;
   team_id: string;
+  enterprise_id: string;
   inputs: FunctionInputValues;
   env: EnvironmentVariables;
 };
