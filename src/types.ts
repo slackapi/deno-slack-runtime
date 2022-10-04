@@ -45,6 +45,8 @@ export type BaseEventInvocationBody = {
   [key: string]: any;
 };
 
+//TODO: add typing for the enterprise id that exists on these payloads
+
 export type BlockActionInvocationBody = BaseEventInvocationBody & {
   type: typeof EventTypes.BLOCK_ACTIONS;
   actions: BlockAction[];
@@ -52,9 +54,6 @@ export type BlockActionInvocationBody = BaseEventInvocationBody & {
 
 export type BlockSuggestionInvocationBody = BaseEventInvocationBody & {
   type: typeof EventTypes.BLOCK_SUGGESTION;
-  enterprise?: {
-    id: string;
-  };
 };
 
 export type ViewClosedInvocationBody = BaseEventInvocationBody & {
