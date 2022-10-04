@@ -78,6 +78,7 @@ export const generateBlockSuggestionPayload = (
       action_id: "test",
       block_id: "test_block",
       value: "test-query",
+      enterprise: { id: FAKE_ID },
       bot_access_token: FAKE_ID,
     },
     context: { bot_access_token: FAKE_ID, team_id: FAKE_ID, variables: {} },

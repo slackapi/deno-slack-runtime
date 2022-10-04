@@ -257,6 +257,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
           team_id: payload.context.team_id,
           inputs: payload.body.function_data?.inputs,
           token: payload.body.bot_access_token,
+          enterprise_id: payload.body?.enterprise?.id ?? "",
         }],
       });
     },
@@ -284,6 +285,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
           body: payload.body,
           env: payload.context.variables,
           team_id: payload.context.team_id,
+          enterprise_id: payload.body.enterprise?.id ?? "",
           inputs: payload.body.function_data?.inputs,
           token: payload.body.bot_access_token,
         }],

@@ -52,6 +52,9 @@ export type BlockActionInvocationBody = BaseEventInvocationBody & {
 
 export type BlockSuggestionInvocationBody = BaseEventInvocationBody & {
   type: typeof EventTypes.BLOCK_SUGGESTION;
+  enterprise?: {
+    id: string;
+  };
 };
 
 export type ViewClosedInvocationBody = BaseEventInvocationBody & {
@@ -164,6 +167,7 @@ export type BlockSuggestionHandlerArgs = {
   body: BlockSuggestionInvocationBody;
   token: string;
   team_id: string;
+  enterprise_id: string;
   inputs: FunctionInputValues;
   env: EnvironmentVariables;
 };
