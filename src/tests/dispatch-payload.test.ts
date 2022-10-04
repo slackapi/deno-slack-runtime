@@ -7,7 +7,9 @@ import {
 } from "../dev_deps.ts";
 import { DispatchPayload } from "../dispatch-payload.ts";
 import {
+  generateBaseInvocationBody,
   generateBlockActionsPayload,
+  generateBlockSuggestionPayload,
   generatePayload,
   generateViewClosedPayload,
   generateViewSubmissionPayload,
@@ -234,6 +236,63 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
     },
   );
 
+  await t.step(
+    "calls unhandledEvent with no blockSuggestion handler",
+    async () => {
+      const payload = generateBlockSuggestionPayload();
+
+      const fnModule = {
+        default: () => ({}),
+        unhandledEvent: () => ({}),
+      };
+
+      const unhandledEventSpy = mock.spy(fnModule, "unhandledEvent");
+
+      await DispatchPayload(payload, () => fnModule);
+
+      mock.assertSpyCall(unhandledEventSpy, 0, {
+        args: [{
+          body: payload.body,
+          env: payload.context.variables,
+          team_id: payload.context.team_id,
+          inputs: payload.body.function_data?.inputs,
+          token: payload.body.bot_access_token,
+          enterprise_id: payload.body?.enterprise?.id ?? "",
+        }],
+      });
+    },
+  );
+
+  await t.step(
+    "does not call unhandledEvent with blockSuggestion handler",
+    async () => {
+      const payload = generateBlockSuggestionPayload();
+
+      const fnModule = {
+        default: () => ({}),
+        blockSuggestion: () => ({}),
+        unhandledEvent: () => ({}),
+      };
+
+      const blockSuggestionSpy = mock.spy(fnModule, "blockSuggestion");
+      const unhandledEventSpy = mock.spy(fnModule, "unhandledEvent");
+
+      await DispatchPayload(payload, () => fnModule);
+
+      mock.assertSpyCalls(unhandledEventSpy, 0);
+      mock.assertSpyCall(blockSuggestionSpy, 0, {
+        args: [{
+          body: payload.body,
+          env: payload.context.variables,
+          team_id: payload.context.team_id,
+          enterprise_id: payload.body.enterprise?.id ?? "",
+          inputs: payload.body.function_data?.inputs,
+          token: payload.body.bot_access_token,
+        }],
+      });
+    },
+  );
+
   await t.step("calls unhandledEvent with no viewClosed handler", async () => {
     const payload = generateViewClosedPayload();
 
@@ -363,6 +422,40 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
       mock.assertSpyCalls(consoleWarnSpy, 1);
 
       consoleWarnSpy.restore();
+    },
+  );
+
+  await t.step(
+    "console.warn() for unrecognized event type",
+    async () => {
+      const payload = generateBaseInvocationBody("unknown_type", "some_id");
+
+      const fnModule = {
+        default: () => ({}),
+      };
+
+      const consoleWarnSpy = mock.spy(console, "warn");
+
+      await DispatchPayload(payload, () => fnModule);
+
+      mock.assertSpyCalls(consoleWarnSpy, 1);
+
+      consoleWarnSpy.restore();
+    },
+  );
+
+  await t.step(
+    "handler errors are thrown",
+    async () => {
+      const payload = generatePayload("test_id");
+
+      const fnModule = {
+        default: () => {
+          throw new Error("whoops");
+        },
+      };
+
+      await assertRejects(() => DispatchPayload(payload, () => fnModule));
     },
   );
 });

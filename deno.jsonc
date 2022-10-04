@@ -12,6 +12,6 @@
   "tasks": {
     "test": "deno fmt --check && deno lint && deno test -A src",
     "coverage": "deno test -A --coverage=.coverage src && deno coverage --exclude=fixtures --exclude=test .coverage",
-    "coverage-lcov": "deno test -A --coverage=.coverage src && deno coverage --exclude=fixtures --exclude=test .coverage --lcov --output=lcov.info"
+    "coverage-lcov": "rm -rf .coverage && deno test -A --coverage=.coverage src && deno coverage --exclude=fixtures --exclude=test .coverage --lcov --output=.coverage/lcov.info"
   }
 }
