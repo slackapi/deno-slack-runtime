@@ -82,7 +82,7 @@ export const runWithOutgoingDomains = async function (
   devDomain: string,
   // deno-lint-ignore no-explicit-any
   log: (...any: any) => void,
-): Promise<Deno.ProcessStatus> {
+): Promise<void> {
   const workingDirectory = Deno.cwd();
   const manifest = await create({
     manifestOnly: true,
@@ -116,7 +116,10 @@ export const runWithOutgoingDomains = async function (
     cmd: command,
   });
 
-  return p.status();
+  const status = await p.status();
+  if (!status.success) {
+    Deno.exit(status.code);
+  }
 };
 
 if (import.meta.main) {
