@@ -1,5 +1,9 @@
-import { assertEquals } from "../dev_deps.ts";
-import { getCommandline } from "../local-run.ts";
+import { assertEquals, assertRejects } from "../dev_deps.ts";
+import {
+  getCommandline,
+  parseDevDomain,
+  runWithOutgoingDomains,
+} from "../local-run.ts";
 
 const fakeManifest = (...domains: string[]) => {
   return {
@@ -88,4 +92,41 @@ Deno.test("getCommandline issues right command with a local file module", () => 
     "--allow-net=slack.com,deno.land",
     FAKE_FILE_EXPECTED_MODULE,
   ]);
+});
+
+Deno.test("getCommandline handles root paths", () => {
+  const command = getCommandline(
+    "file:///local-run.ts",
+    FAKE_DENO_PATH,
+    fakeManifest("example.com"),
+    "",
+  );
+  assertEquals(command, [
+    FAKE_DENO_PATH,
+    "run",
+    "-q",
+    "--config=deno.jsonc",
+    "--allow-read",
+    "--allow-net=example.com,slack.com,deno.land",
+    "file:///local-run-function.ts",
+  ]);
+});
+
+Deno.test("parseDevDomain parses the right flag", () => {
+  const domain = parseDevDomain(["--sdk-slack-dev-domain=foo.com"]);
+  assertEquals(domain, "foo.com");
+});
+
+Deno.test("parseDevDomain defaults to empty string", () => {
+  const domain = parseDevDomain([]);
+  assertEquals(domain, "");
+});
+
+Deno.test("runWithOutgoingDomains fails with no functions", () => {
+  const createEmptyManifest = async () => {
+    return await {};
+  };
+  assertRejects(() => {
+    return runWithOutgoingDomains(createEmptyManifest, "", () => {});
+  });
 });

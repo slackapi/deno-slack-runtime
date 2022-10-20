@@ -6,7 +6,7 @@ const SLACK_DEV_DOMAIN_FLAG = "sdk-slack-dev-domain";
  * @param args An array of command line flags
  * @returns The value of the SLACK_DEV_DOMAIN_FLAG flag, or empty string
  */
-const parseDevDomain = (args: string[]): string => {
+export const parseDevDomain = (args: string[]): string => {
   const flags = parse(args);
   return flags[SLACK_DEV_DOMAIN_FLAG] ?? "";
 };
@@ -112,9 +112,7 @@ export const runWithOutgoingDomains = async function (
 
   log("running command: ", ...command);
 
-  const p = Deno.run({
-    cmd: command,
-  });
+  const p = Deno.run({ cmd: command });
 
   const status = await p.status();
   if (!status.success) {
