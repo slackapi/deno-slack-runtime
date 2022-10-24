@@ -1,51 +1,129 @@
-import { createManifest, readAll } from "./deps.ts";
-import { ParsePayload } from "./parse-payload.ts";
-import { DispatchPayload } from "./dispatch-payload.ts";
+import { createManifest, parse } from "./deps.ts";
+
+const SLACK_DEV_DOMAIN_FLAG = "sdk-slack-dev-domain";
 
 /**
- * @description Runs an application function locally by dispatching a payload to it after loading it.
+ * @param args An array of command line flags
+ * @returns The value of the SLACK_DEV_DOMAIN_FLAG flag, or empty string
  */
-export const runLocally = async function (
+export const parseDevDomain = (args: string[]): string => {
+  const flags = parse(args);
+  return flags[SLACK_DEV_DOMAIN_FLAG] ?? "";
+};
+
+/**
+ * Returns a module URL string pointing to `file` in the same
+ * directory as `mainModule`.
+ * @param mainModule The currently running Deno module, like from `Deno.mainModule`
+ * @param filename The name of the file to return the URL for
+ * @returns
+ */
+const findRelativeFile = (mainModule: string, filename: string): string => {
+  const moduleUrl = new URL(mainModule);
+  const path = moduleUrl.pathname;
+  const pathComponents = path.split("/");
+  if (pathComponents.length > 0) {
+    pathComponents[pathComponents.length - 1] = filename;
+  } else {
+    pathComponents[0] = filename;
+  }
+  moduleUrl.pathname = pathComponents.join("/");
+  return moduleUrl.href;
+};
+
+/**
+ * Determines the command line for the `deno run` invocation that will actually run the function,
+ * setting the appropriate permissions flags
+ * @param mainModule The URL to the main file being run, from `Deno.mainModule`
+ * @param denoExecutablePath The path to the deno executable
+ * @param manifest The application's manifest
+ * @param devDomain The domain of the slack dev instance being used, or empty string for production
+ * @returns The commandline to run `local-run-function.ts` to actually execute the function
+ */
+export const getCommandline = function (
+  mainModule: string,
+  denoExecutablePath: string,
+  // deno-lint-ignore no-explicit-any
+  manifest: any,
+  devDomain: string,
+): string[] {
+  const command = [
+    denoExecutablePath,
+    "run",
+    "-q",
+    "--config=deno.jsonc",
+    "--allow-read",
+  ];
+
+  const allowedDomains = manifest.outgoing_domains ?? [];
+
+  // If using a dev instance, allow making API calls to that domain
+  // and ignore SSL errors to it
+  if (devDomain !== "") {
+    command.push("--unsafely-ignore-certificate-errors=" + devDomain);
+    allowedDomains.push(devDomain);
+  } else {
+    allowedDomains.push("slack.com");
+  }
+  // Add deno.land to allow uncached remote deps
+  allowedDomains.push("deno.land");
+
+  command.push("--allow-net=" + allowedDomains.join(","));
+  command.push(findRelativeFile(mainModule, "local-run-function.ts"));
+
+  return command;
+};
+
+/**
+ * @description Runs an application locally by calling `deno run` with appropriate flags.
+ */
+export const runWithOutgoingDomains = async function (
   create: typeof createManifest,
-  parse: typeof ParsePayload,
-  readStdin: typeof readAll,
-  dispatch: typeof DispatchPayload,
+  devDomain: string,
+  // deno-lint-ignore no-explicit-any
+  log: (...any: any) => void,
 ): Promise<void> {
   const workingDirectory = Deno.cwd();
   const manifest = await create({
     manifestOnly: true,
-    log: () => {},
+    log: log,
     workingDirectory,
   });
+
   if (!manifest.functions) {
     throw new Error(
       `No function definitions were found in the manifest! manifest.functions: ${manifest.functions}`,
     );
   }
-  const payload = await parse(readStdin);
 
-  // Finds the corresponding function in the manifest definition, and then uses
-  // the `source_file` property to determine the function module file location
-  const resp = await dispatch(payload, (functionCallbackId) => {
-    const functionDefn = manifest.functions[functionCallbackId];
-    if (!functionDefn) {
-      throw new Error(
-        `No function definition for function callback id ${functionCallbackId} was found in the manifest! manifest.functions: ${manifest.functions}`,
-      );
-    }
+  let denoExecutablePath = "deno";
+  try {
+    denoExecutablePath = Deno.execPath();
+  } catch (e) {
+    log("Error determining deno executable path: ", e);
+  }
 
-    const functionFile =
-      `file://${workingDirectory}/${functionDefn.source_file}`;
+  const command = getCommandline(
+    Deno.mainModule,
+    denoExecutablePath,
+    manifest,
+    devDomain,
+  );
 
-    return functionFile;
-  });
+  log("running command: ", ...command);
 
-  // The CLI expects a JSON payload to be output to stdout
-  // This is formalized in the `run` hook of the CLI/SDK Tech Spec:
-  // https://corp.quip.com/0gDvAsqoaaYE/Proposal-CLI-SDK-Interface#temp:C:fOC1991c5aec8994d0db01d26260
-  console.log(JSON.stringify(resp || {}));
+  const p = Deno.run({ cmd: command });
+
+  const status = await p.status();
+  if (!status.success) {
+    Deno.exit(status.code);
+  }
 };
 
 if (import.meta.main) {
-  await runLocally(createManifest, ParsePayload, readAll, DispatchPayload);
+  await runWithOutgoingDomains(
+    createManifest,
+    parseDevDomain(Deno.args),
+    () => {},
+  );
 }
