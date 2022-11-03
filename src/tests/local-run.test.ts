@@ -34,6 +34,7 @@ Deno.test("getCommandline issues right command no dev domain", () => {
     "-q",
     "--config=deno.jsonc",
     "--allow-read",
+    "--allow-env",
     "--allow-net=example.com,slack.com,deno.land",
     FAKE_DENO_LAND_EXPECTED_MODULE,
   ]);
@@ -52,6 +53,7 @@ Deno.test("getCommandline issues right command with dev domain", () => {
     "-q",
     "--config=deno.jsonc",
     "--allow-read",
+    "--allow-env",
     "--unsafely-ignore-certificate-errors=dev1234.slack.com",
     "--allow-net=example.com,dev1234.slack.com,deno.land",
     FAKE_DENO_LAND_EXPECTED_MODULE,
@@ -71,6 +73,7 @@ Deno.test("getCommandline issues right command with no outgoing domains", () => 
     "-q",
     "--config=deno.jsonc",
     "--allow-read",
+    "--allow-env",
     "--allow-net=slack.com,deno.land",
     FAKE_DENO_LAND_EXPECTED_MODULE,
   ]);
@@ -89,6 +92,7 @@ Deno.test("getCommandline issues right command with a local file module", () => 
     "-q",
     "--config=deno.jsonc",
     "--allow-read",
+    "--allow-env",
     "--allow-net=slack.com,deno.land",
     FAKE_FILE_EXPECTED_MODULE,
   ]);
@@ -107,6 +111,7 @@ Deno.test("getCommandline handles root paths", () => {
     "-q",
     "--config=deno.jsonc",
     "--allow-read",
+    "--allow-env",
     "--allow-net=example.com,slack.com,deno.land",
     "file:///local-run-function.ts",
   ]);
