@@ -103,13 +103,26 @@ export const DispatchPayload = async (
       } else {
         console.warn(handlerError.message);
       }
+    } else if (isAllowNetError(handlerError)) {
+      console.warn(
+        "⚠️   deno-slack-runtime: Detected missing network permissions. Add the domain to your manifest's `outgoingDomains` to resolve the `--allow-net` error.",
+      );
+      throw handlerError;
     } else {
+      console.warn(handlerError);
       throw handlerError;
     }
   }
 
   return resp || {};
 };
+
+// deno-lint-ignore no-explicit-any
+function isAllowNetError(e: any): boolean {
+  return e?.name === "PermissionDenied" &&
+    typeof e?.message === "string" &&
+    e?.message.includes("run again with the --allow-net flag");
+}
 
 function getFunctionCallbackID(
   eventType: ValidEventType,
