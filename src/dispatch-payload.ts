@@ -109,7 +109,6 @@ export const DispatchPayload = async (
       );
       throw handlerError;
     } else {
-      console.warn(handlerError);
       throw handlerError;
     }
   }
