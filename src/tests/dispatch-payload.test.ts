@@ -459,3 +459,30 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
     },
   );
 });
+
+Deno.test("DispatchPayload custom error handling", async (t) => {
+  await t.step(
+    "console.warn() if an allow-net error is thrown",
+    async () => {
+      const payload = generatePayload("test_id");
+
+      const fnModule = {
+        default: () => {
+          const e = new Error(
+            'Requires net access to "example.com", run again with the --allow-net flag',
+          );
+          e.name = "PermissionDenied";
+          throw e;
+        },
+      };
+
+      const consoleWarnSpy = mock.spy(console, "warn");
+
+      await assertRejects(() => DispatchPayload(payload, () => fnModule));
+
+      mock.assertSpyCalls(consoleWarnSpy, 1);
+
+      consoleWarnSpy.restore();
+    },
+  );
+});
