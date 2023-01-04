@@ -462,6 +462,27 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
 
 Deno.test("DispatchPayload custom error handling", async (t) => {
   await t.step(
+    "no call to console.warn() for a generic error",
+    async () => {
+      const payload = generatePayload("test_id");
+
+      const fnModule = {
+        default: () => {
+          throw new Error("boom");
+        },
+      };
+
+      const consoleWarnSpy = mock.spy(console, "warn");
+
+      await assertRejects(() => DispatchPayload(payload, () => fnModule));
+
+      mock.assertSpyCalls(consoleWarnSpy, 0);
+
+      consoleWarnSpy.restore();
+    },
+  );
+
+  await t.step(
     "console.warn() if an allow-net error is thrown",
     async () => {
       const payload = generatePayload("test_id");
