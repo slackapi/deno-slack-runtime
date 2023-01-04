@@ -120,7 +120,7 @@ export const DispatchPayload = async (
 function isAllowNetError(e: any): boolean {
   return e?.name === "PermissionDenied" &&
     typeof e?.message === "string" &&
-    e?.message.includes("run again with the --allow-net flag");
+    e?.message.includes("--allow-net");
 }
 
 function getFunctionCallbackID(
