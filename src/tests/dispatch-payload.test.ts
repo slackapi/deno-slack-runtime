@@ -459,3 +459,47 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
     },
   );
 });
+
+Deno.test("DispatchPayload custom error handling", async (t) => {
+  await t.step(
+    "passes through generic error",
+    async () => {
+      const payload = generatePayload("test_id");
+
+      const fnModule = {
+        default: () => {
+          throw new Error("boom");
+        },
+      };
+
+      await assertRejects(
+        () => DispatchPayload(payload, () => fnModule),
+        Error,
+        "boom",
+      );
+    },
+  );
+
+  await t.step(
+    "customizes error if matches allow net",
+    async () => {
+      const payload = generatePayload("test_id");
+
+      const fnModule = {
+        default: () => {
+          const e = new Error(
+            'Requires net access to "example.com", run again with the --allow-net flag',
+          );
+          e.name = "PermissionDenied";
+          throw e;
+        },
+      };
+
+      await assertRejects(
+        () => DispatchPayload(payload, () => fnModule),
+        Error,
+        "add the domain to your manifest's `outgoingDomains`",
+      );
+    },
+  );
+});

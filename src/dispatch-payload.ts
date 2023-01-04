@@ -103,6 +103,11 @@ export const DispatchPayload = async (
       } else {
         console.warn(handlerError.message);
       }
+    } else if (isAllowNetError(handlerError)) {
+      handlerError.message =
+        "Detected missing network permissions; add the domain to your manifest's `outgoingDomains`. Original message: " +
+        handlerError.message;
+      throw handlerError;
     } else {
       throw handlerError;
     }
@@ -110,6 +115,13 @@ export const DispatchPayload = async (
 
   return resp || {};
 };
+
+// deno-lint-ignore no-explicit-any
+function isAllowNetError(e: any): boolean {
+  return e?.name === "PermissionDenied" &&
+    typeof e?.message === "string" &&
+    e?.message.includes("--allow-net");
+}
 
 function getFunctionCallbackID(
   eventType: ValidEventType,
