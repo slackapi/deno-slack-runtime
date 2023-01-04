@@ -104,9 +104,9 @@ export const DispatchPayload = async (
         console.warn(handlerError.message);
       }
     } else if (isAllowNetError(handlerError)) {
-      console.warn(
-        "⚠️   deno-slack-runtime: Detected missing network permissions. Add the domain to your manifest's `outgoingDomains` to resolve the `--allow-net` error.",
-      );
+      handlerError.message =
+        "Detected missing network permissions; add the domain to your manifest's `outgoingDomains`. Original message: " +
+        handlerError.message;
       throw handlerError;
     } else {
       throw handlerError;

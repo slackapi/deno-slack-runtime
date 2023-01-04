@@ -462,7 +462,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
 
 Deno.test("DispatchPayload custom error handling", async (t) => {
   await t.step(
-    "no call to console.warn() for a generic error",
+    "passes through generic error",
     async () => {
       const payload = generatePayload("test_id");
 
@@ -472,18 +472,16 @@ Deno.test("DispatchPayload custom error handling", async (t) => {
         },
       };
 
-      const consoleWarnSpy = mock.spy(console, "warn");
-
-      await assertRejects(() => DispatchPayload(payload, () => fnModule));
-
-      mock.assertSpyCalls(consoleWarnSpy, 0);
-
-      consoleWarnSpy.restore();
+      await assertRejects(
+        () => DispatchPayload(payload, () => fnModule),
+        Error,
+        "boom",
+      );
     },
   );
 
   await t.step(
-    "console.warn() if an allow-net error is thrown",
+    "customizes error if matches allow net",
     async () => {
       const payload = generatePayload("test_id");
 
@@ -497,13 +495,11 @@ Deno.test("DispatchPayload custom error handling", async (t) => {
         },
       };
 
-      const consoleWarnSpy = mock.spy(console, "warn");
-
-      await assertRejects(() => DispatchPayload(payload, () => fnModule));
-
-      mock.assertSpyCalls(consoleWarnSpy, 1);
-
-      consoleWarnSpy.restore();
+      await assertRejects(
+        () => DispatchPayload(payload, () => fnModule),
+        Error,
+        "add the domain to your manifest's `outgoingDomains`",
+      );
     },
   );
 });
