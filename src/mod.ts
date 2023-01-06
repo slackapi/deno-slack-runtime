@@ -83,7 +83,10 @@ const startServer = async function (port: number) {
             )
           );
         } catch (e) {
-          console.error(`Unable to run user supplied module caught error ${e}`);
+          const loggable = e.stack ? e.stack : e;
+          console.error(
+            `Caught error from user supplied module: ${loggable}`,
+          );
           await requestEvent.respondWith(
             new Response(`error ${e}`, {
               status: 500,
