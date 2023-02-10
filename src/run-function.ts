@@ -1,6 +1,7 @@
-import { BaseSlackAPIClient } from "./deps.ts";
+import { BaseSlackAPIClient, Protocol } from "./deps.ts";
 import {
   EventTypes,
+  FunctionHandlerReturnArgs,
   FunctionInvocationBody,
   FunctionModule,
   InvocationPayload,
@@ -10,6 +11,7 @@ import { UnhandledEventError } from "./run-unhandled-event.ts";
 export const RunFunction = async (
   payload: InvocationPayload<FunctionInvocationBody>,
   functionModule: FunctionModule,
+  walkieTalkie: Protocol,
 ): Promise<void> => {
   const { body, context } = payload;
   const env = context.variables || {};
@@ -29,33 +31,40 @@ export const RunFunction = async (
     slackApiUrl: env["SLACK_API_URL"],
   });
 
-  // We don't catch any errors the handlers may throw, we let them throw, and stop the process
-  const {
-    completed = true,
-    outputs = {},
-    error,
-  } = await functionModule.default({
-    inputs,
-    env,
-    token,
-    team_id,
-    enterprise_id,
-    event: body.event,
-  });
+  // In case this is a local-run, and we use a protocol that has specific rules around when we can use stdout/stderr,
+  // we install any protocol-specific mocks required.
+  if (walkieTalkie.install) walkieTalkie.install();
+  let response: FunctionHandlerReturnArgs = {};
+  try {
+    response = await functionModule.default({
+      inputs,
+      env,
+      token,
+      team_id,
+      enterprise_id,
+      event: body.event,
+    });
+  } catch (e) {
+    // In case this is a local-run, and we use a protocol that has specific rules around when we can use stdout/stderr,
+    // we uninstall any protocol-specific mocks we installed earlier if userland code explodes, and re-throw the error
+    if (walkieTalkie.uninstall) walkieTalkie.uninstall();
+    throw e;
+  }
+  if (walkieTalkie.uninstall) walkieTalkie.uninstall();
 
   // App has indicated there's an unrecoverable error with this function invocation
-  if (error) {
+  if (response.error) {
     await client.apiCall("functions.completeError", {
-      error,
+      error: response.error,
       function_execution_id: functionExecutionId,
     });
     return;
   }
 
   // App has indicated it's function completed successfully
-  if (completed) {
+  if (response.completed) {
     await client.apiCall("functions.completeSuccess", {
-      outputs,
+      outputs: response.outputs,
       function_execution_id: functionExecutionId,
     });
     return;

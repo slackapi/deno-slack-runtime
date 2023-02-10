@@ -1,3 +1,4 @@
+import { Protocol } from "./deps.ts";
 import {
   BaseEventInvocationBody,
   FunctionModule,
@@ -9,6 +10,7 @@ export const UNHANDLED_EVENT_ERROR = "UnhandledEventError";
 export const RunUnhandledEvent = async (
   payload: InvocationPayload<BaseEventInvocationBody>,
   functionModule: FunctionModule,
+  walkieTalkie: Protocol,
   // deno-lint-ignore no-explicit-any
 ): Promise<any> => {
   const { body, context } = payload;
@@ -23,19 +25,29 @@ export const RunUnhandledEvent = async (
   if (!handler) {
     throw new Error("No unhandledEvent handler");
   }
-
-  // We don't catch any errors the handlers may throw, we let them throw, and stop the process
+  // In case this is a local-run, and we use a protocol that has specific rules around when we can use stdout/stderr,
+  // we install any protocol-specific mocks required.
+  if (walkieTalkie.install) walkieTalkie.install();
   // deno-lint-ignore no-explicit-any
-  const closedResp: any = await handler({
-    inputs,
-    env,
-    token,
-    body,
-    team_id,
-    enterprise_id,
-  });
+  let response: any = {};
+  try {
+    response = await handler({
+      inputs,
+      env,
+      token,
+      body,
+      team_id,
+      enterprise_id,
+    });
+  } catch (e) {
+    // In case this is a local-run, and we use a protocol that has specific rules around when we can use stdout/stderr,
+    // we uninstall any protocol-specific mocks we installed earlier if userland code explodes, and re-throw the error
+    if (walkieTalkie.uninstall) walkieTalkie.uninstall();
+    throw e;
+  }
+  if (walkieTalkie.uninstall) walkieTalkie.uninstall();
 
-  return closedResp || {};
+  return response || {};
 };
 
 export class UnhandledEventError extends Error {

@@ -1,4 +1,9 @@
-import { createManifest, readAll } from "./deps.ts";
+import {
+  createManifest,
+  getProtocolInterface,
+  Protocol,
+  readAll,
+} from "./deps.ts";
 import { ParsePayload } from "./parse-payload.ts";
 import { DispatchPayload } from "./dispatch-payload.ts";
 
@@ -10,11 +15,12 @@ export const runLocally = async function (
   parse: typeof ParsePayload,
   readStdin: typeof readAll,
   dispatch: typeof DispatchPayload,
+  walkieTalkie: Protocol,
 ): Promise<void> {
   const workingDirectory = Deno.cwd();
   const manifest = await create({
     manifestOnly: true,
-    log: () => {},
+    log: walkieTalkie.log,
     workingDirectory,
   });
   if (!manifest.functions) {
@@ -26,7 +32,7 @@ export const runLocally = async function (
 
   // Finds the corresponding function in the manifest definition, and then uses
   // the `source_file` property to determine the function module file location
-  const resp = await dispatch(payload, (functionCallbackId) => {
+  const resp = await dispatch(payload, walkieTalkie, (functionCallbackId) => {
     const functionDefn = manifest.functions[functionCallbackId];
     if (!functionDefn) {
       throw new Error(
@@ -40,12 +46,17 @@ export const runLocally = async function (
     return functionFile;
   });
 
-  // The CLI expects a JSON payload to be output to stdout
-  // This is formalized in the `run` hook of the CLI/SDK Tech Spec:
-  // https://corp.quip.com/0gDvAsqoaaYE/Proposal-CLI-SDK-Interface#temp:C:fOC1991c5aec8994d0db01d26260
-  console.log(JSON.stringify(resp || {}));
+  // Use the specific protocol implementation to respond to the CLI
+  walkieTalkie.respond(JSON.stringify(resp || {}));
 };
 
 if (import.meta.main) {
-  await runLocally(createManifest, ParsePayload, readAll, DispatchPayload);
+  const walkieTalkie = getProtocolInterface(Deno.args);
+  await runLocally(
+    createManifest,
+    ParsePayload,
+    readAll,
+    DispatchPayload,
+    walkieTalkie,
+  );
 }

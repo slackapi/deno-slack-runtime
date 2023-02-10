@@ -23,6 +23,7 @@ import {
   ViewClosedInvocationBody,
   ViewSubmissionInvocationBody,
 } from "./types.ts";
+import { Protocol } from "./deps.ts";
 
 // Given a function callback_id, returns a string to a path to a module, or the module directly
 type GetFunctionFileCallback = {
@@ -32,6 +33,7 @@ type GetFunctionFileCallback = {
 export const DispatchPayload = async (
   // deno-lint-ignore no-explicit-any
   payload: InvocationPayload<any>,
+  walkieTalkie: Protocol,
   getFunctionFile: GetFunctionFileCallback,
 ) => {
   const eventType = payload?.body?.event?.type || payload?.body?.type || "";
@@ -40,7 +42,7 @@ export const DispatchPayload = async (
 
   // If we can't find a callback_id, we'll warn about it, then ack the event so we don't retry.
   if (!functionCallbackId) {
-    console.warn(
+    walkieTalkie.warn(
       `Could not find the function "callback_id" in the payload for an event type of "${
         eventType || "unknown"
       }"`,
@@ -64,30 +66,35 @@ export const DispatchPayload = async (
         resp = await RunFunction(
           payload as InvocationPayload<FunctionInvocationBody>,
           functionModule,
+          walkieTalkie,
         );
         break;
       case EventTypes.BLOCK_ACTIONS:
         resp = await RunBlockAction(
           payload as InvocationPayload<BlockActionInvocationBody>,
           functionModule,
+          walkieTalkie,
         );
         break;
       case EventTypes.BLOCK_SUGGESTION:
         resp = await RunBlockSuggestion(
           payload as InvocationPayload<BlockSuggestionInvocationBody>,
           functionModule,
+          walkieTalkie,
         );
         break;
       case EventTypes.VIEW_SUBMISSION:
         resp = await RunViewSubmission(
           payload as InvocationPayload<ViewSubmissionInvocationBody>,
           functionModule,
+          walkieTalkie,
         );
         break;
       case EventTypes.VIEW_CLOSED:
         resp = await RunViewClosed(
           payload as InvocationPayload<ViewClosedInvocationBody>,
           functionModule,
+          walkieTalkie,
         );
         break;
       default:
@@ -99,9 +106,9 @@ export const DispatchPayload = async (
     if (isUnhandledEventError(handlerError)) {
       // Attempt to run the unhandledEvent handler
       if (hasUnhandledEventHandler(functionModule)) {
-        resp = await RunUnhandledEvent(payload, functionModule);
+        resp = await RunUnhandledEvent(payload, functionModule, walkieTalkie);
       } else {
-        console.warn(handlerError.message);
+        walkieTalkie.warn(handlerError.message);
       }
     } else if (isAllowNetError(handlerError)) {
       handlerError.message =
