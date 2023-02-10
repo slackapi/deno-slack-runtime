@@ -52,6 +52,7 @@ export const DispatchPayload = async (
 
   // Let caller resolve how to import the function module
   const potentialFunctionFile = getFunctionFile(functionCallbackId);
+  walkieTalkie.log("will load function file", potentialFunctionFile);
   const functionModule = await LoadFunctionModule(potentialFunctionFile);
 
   // This response gets passed back to the layer calling the runtime
@@ -63,6 +64,7 @@ export const DispatchPayload = async (
   try {
     switch (eventType) {
       case EventTypes.FUNCTION_EXECUTED:
+        walkieTalkie.log("running function");
         resp = await RunFunction(
           payload as InvocationPayload<FunctionInvocationBody>,
           functionModule,
@@ -119,7 +121,6 @@ export const DispatchPayload = async (
       throw handlerError;
     }
   }
-
   return resp || {};
 };
 

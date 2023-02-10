@@ -29,6 +29,7 @@ export const runLocally = async function (
     );
   }
   const payload = await parse(readStdin);
+  walkieTalkie.log("got payload", payload);
 
   // Finds the corresponding function in the manifest definition, and then uses
   // the `source_file` property to determine the function module file location
@@ -45,7 +46,7 @@ export const runLocally = async function (
 
     return functionFile;
   });
-
+  walkieTalkie.log("dispatch return received", resp);
   // Use the specific protocol implementation to respond to the CLI
   walkieTalkie.respond(JSON.stringify(resp || {}));
 };

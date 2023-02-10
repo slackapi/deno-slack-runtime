@@ -79,7 +79,11 @@ export const getCommandline = function (
   command.push(findRelativeFile(mainModule, "local-run-function.ts"));
   // If there are protocol-specific flags that need to be passed down to the child process,
   // add them here.
-  if (walkieTalkie.getCLIFlags) command.push(...walkieTalkie.getCLIFlags());
+  if (walkieTalkie.getCLIFlags) {
+    const flags = walkieTalkie.getCLIFlags();
+    walkieTalkie.log("got flags", flags[0], flags[1].split("-").join(".")); // mess with the flags here so we dont trigger message boundary parsing in CLI :sweat-smile:
+    command.push(...flags);
+  }
 
   return command;
 };
@@ -121,7 +125,8 @@ export const runWithOutgoingDomains = async function (
     walkieTalkie,
   );
 
-  walkieTalkie.log("running command: ", ...command);
+  // Careful uncommenting the below: since the message boundary flag will be present in there, it will mess up the CLI-side parsing!
+  //walkieTalkie.log("running command: ", ...command);
 
   const p = Deno.run({ cmd: command });
 
