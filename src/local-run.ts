@@ -1,4 +1,9 @@
-import { createManifest, parse } from "./deps.ts";
+import {
+  createManifest,
+  getProtocolInterface,
+  parse,
+  Protocol,
+} from "./deps.ts";
 
 const SLACK_DEV_DOMAIN_FLAG = "sdk-slack-dev-domain";
 
@@ -46,6 +51,7 @@ export const getCommandline = function (
   // deno-lint-ignore no-explicit-any
   manifest: any,
   devDomain: string,
+  hookCLI: Protocol,
 ): string[] {
   const command = [
     denoExecutablePath,
@@ -72,6 +78,13 @@ export const getCommandline = function (
   command.push("--allow-net=" + allowedDomains.join(","));
   command.push(findRelativeFile(mainModule, "local-run-function.ts"));
 
+  // If there are protocol-specific flags that need to be passed down to the child process,
+  // add them here.
+  if (hookCLI.getCLIFlags) {
+    const flags = hookCLI.getCLIFlags();
+    command.push(...flags);
+  }
+
   return command;
 };
 
@@ -81,13 +94,12 @@ export const getCommandline = function (
 export const runWithOutgoingDomains = async function (
   create: typeof createManifest,
   devDomain: string,
-  // deno-lint-ignore no-explicit-any
-  log: (...any: any) => void,
+  walkieTalkie: Protocol,
 ): Promise<void> {
   const workingDirectory = Deno.cwd();
   const manifest = await create({
     manifestOnly: true,
-    log: log,
+    log: () => {},
     workingDirectory,
   });
 
@@ -101,7 +113,8 @@ export const runWithOutgoingDomains = async function (
   try {
     denoExecutablePath = Deno.execPath();
   } catch (e) {
-    log("Error determining deno executable path: ", e);
+    walkieTalkie.error("Error determining deno executable path: ", e);
+    // TODO: should we throw here?
   }
 
   const command = getCommandline(
@@ -109,9 +122,12 @@ export const runWithOutgoingDomains = async function (
     denoExecutablePath,
     manifest,
     devDomain,
+    walkieTalkie,
   );
-
-  log("running command: ", ...command);
+  walkieTalkie.log(
+    "command to be invoked in deno.run is",
+    command.join(" ").split("").join("."),
+  );
 
   const p = Deno.run({ cmd: command });
 
@@ -122,9 +138,10 @@ export const runWithOutgoingDomains = async function (
 };
 
 if (import.meta.main) {
+  const hookCLI = getProtocolInterface(Deno.args);
   await runWithOutgoingDomains(
     createManifest,
     parseDevDomain(Deno.args),
-    () => {},
+    hookCLI,
   );
 }

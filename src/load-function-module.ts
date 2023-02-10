@@ -14,5 +14,8 @@ export const LoadFunctionModule = async (
 
   // Let exceptions be thrown, error would bubble up in both local and
   // remote running contexts.
+  // TODO: if userland code has `console.log`s _outside_ of a function handler, at the top level scope of the module, then things might break.
+  // If we want to be really careful here, we can pass in the Protocol interface and call the install() and uninstall() methods (if they exist) before
+  // and after the import to guard against that.
   return await import(potentialFunctionFile as string);
 };

@@ -23,6 +23,7 @@ import {
   ViewClosedInvocationBody,
   ViewSubmissionInvocationBody,
 } from "./types.ts";
+import { Protocol } from "./deps.ts";
 
 // Given a function callback_id, returns a string to a path to a module, or the module directly
 type GetFunctionFileCallback = {
@@ -32,6 +33,7 @@ type GetFunctionFileCallback = {
 export const DispatchPayload = async (
   // deno-lint-ignore no-explicit-any
   payload: InvocationPayload<any>,
+  walkieTalkie: Protocol,
   getFunctionFile: GetFunctionFileCallback,
 ) => {
   const eventType = payload?.body?.event?.type || payload?.body?.type || "";
@@ -40,7 +42,7 @@ export const DispatchPayload = async (
 
   // If we can't find a callback_id, we'll warn about it, then ack the event so we don't retry.
   if (!functionCallbackId) {
-    console.warn(
+    walkieTalkie.warn(
       `Could not find the function "callback_id" in the payload for an event type of "${
         eventType || "unknown"
       }"`,
@@ -101,7 +103,7 @@ export const DispatchPayload = async (
       if (hasUnhandledEventHandler(functionModule)) {
         resp = await RunUnhandledEvent(payload, functionModule);
       } else {
-        console.warn(handlerError.message);
+        walkieTalkie.warn(handlerError.message);
       }
     } else if (isAllowNetError(handlerError)) {
       handlerError.message =
@@ -112,7 +114,6 @@ export const DispatchPayload = async (
       throw handlerError;
     }
   }
-
   return resp || {};
 };
 

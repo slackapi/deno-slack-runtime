@@ -26,10 +26,9 @@ export const RunViewSubmission = async (
       `Received a ${EventTypes.VIEW_SUBMISSION} payload but the function does not define a viewSubmission handler`,
     );
   }
-
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process
   // deno-lint-ignore no-explicit-any
-  const submissionResp: any = await handler({
+  const response: any = await handler({
     inputs,
     env,
     token,
@@ -39,5 +38,5 @@ export const RunViewSubmission = async (
     enterprise_id,
   });
 
-  return submissionResp || {};
+  return response || {};
 };

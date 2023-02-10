@@ -1,7 +1,11 @@
 import { DispatchPayload } from "./dispatch-payload.ts";
 import { InvocationPayload } from "./types.ts";
-import { parse } from "./deps.ts";
+import { parse, Protocol } from "./deps.ts";
 
+/**
+ * This module should only be used by Run On Slack Infrastructure
+ * The Slack backend this module's code runs on has explicit expectations on how information sent to stdout and stderr are handled by Slack.
+ */
 export const run = async function (functionDir: string, input: string) {
   // Directory containing functions must be provided when invoking this script.
   if (!functionDir) {
@@ -12,11 +16,24 @@ export const run = async function (functionDir: string, input: string) {
   // deno-lint-ignore no-explicit-any
   const payload: InvocationPayload<any> = JSON.parse(input);
 
+  // Dummy protocol interface object that just directs relevant log/warn/error logging
+  // to their usual locations; not relevant for ROSI apps, thus we provide this simple wrapper
+  const walkieTalkie: Protocol = {
+    log: console.log,
+    warn: console.warn,
+    error: console.error,
+    respond: () => {},
+  };
   // For the hosted runtime, we only support js files named w/ the callback_id
   // They should already be bundled into single files as part of the package uploaded
-  const resp = await DispatchPayload(payload, (functionCallbackId) => {
-    return `${functionDir}/${functionCallbackId}.js`;
-  });
+  // See the deno-slack-hooks repo for how the bundling and package is done
+  const resp = await DispatchPayload(
+    payload,
+    walkieTalkie,
+    (functionCallbackId) => {
+      return `${functionDir}/${functionCallbackId}.js`;
+    },
+  );
 
   return resp || {};
 };

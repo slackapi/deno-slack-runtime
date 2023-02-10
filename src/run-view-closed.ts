@@ -29,7 +29,7 @@ export const RunViewClosed = async (
 
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process
   // deno-lint-ignore no-explicit-any
-  const closedResp: any = await handler({
+  const response: any = await handler({
     inputs,
     env,
     token,
@@ -39,5 +39,5 @@ export const RunViewClosed = async (
     view,
   });
 
-  return closedResp || {};
+  return response || {};
 };
