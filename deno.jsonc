@@ -1,7 +1,16 @@
 {
+  "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
   "fmt": {
     "files": {
       "include": ["src"]
+    },
+    "options": {
+      "semiColons": true,
+      "indentWidth": 2,
+      "lineWidth": 80,
+      "proseWrap": "always",
+      "singleQuote": false,
+      "useTabs": false
     }
   },
   "lint": {
@@ -9,10 +18,15 @@
       "include": ["src"]
     }
   },
+  "test": {
+    "files": {
+      "include": ["src"]
+    }
+  },
   "tasks": {
-    "test": "deno fmt --check && deno lint && deno test -A src",
-    "coverage": "deno test -A --coverage=.coverage src && deno coverage --exclude=fixtures --exclude=test .coverage",
-    "coverage-lcov": "rm -rf .coverage && deno test -A --coverage=.coverage src && deno coverage --exclude=fixtures --exclude=test .coverage --lcov --output=.coverage/lcov.info"
+    "test": "deno fmt --check && deno lint && deno test --allow-read --allow-net",
+    "coverage": "deno test --allow-read --allow-net --coverage=.coverage src && deno coverage --exclude=fixtures --exclude=test .coverage",
+    "coverage-lcov": "rm -rf .coverage && deno deno test --allow-read --allow-net --coverage=.coverage src && deno coverage --exclude=fixtures --exclude=test .coverage --lcov --output=.coverage/lcov.info"
   },
   "lock": false
 }
