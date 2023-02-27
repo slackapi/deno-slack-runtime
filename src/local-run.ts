@@ -81,7 +81,6 @@ export const getCommandline = function (
   // add them here.
   if (walkieTalkie.getCLIFlags) {
     const flags = walkieTalkie.getCLIFlags();
-    walkieTalkie.log("got flags", flags[0], flags[1].split("-").join(".")); // mess with the flags here so we dont trigger message boundary parsing in CLI :sweat-smile:
     command.push(...flags);
   }
 
@@ -124,9 +123,6 @@ export const runWithOutgoingDomains = async function (
     devDomain,
     walkieTalkie,
   );
-
-  // Careful uncommenting the below: since the message boundary flag will be present in there, it will mess up the CLI-side parsing!
-  //walkieTalkie.log("running command: ", ...command);
 
   const p = Deno.run({ cmd: command });
 

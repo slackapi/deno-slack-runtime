@@ -24,7 +24,7 @@ export const RunBlockSuggestion = async (
     functionModule.default?.blockSuggestion;
   if (!handler) {
     throw new UnhandledEventError(
-      `Received a ${EventTypes.BLOCK_SUGGESTION} payload but the function does not define a blockActions handler`,
+      `Received a ${EventTypes.BLOCK_SUGGESTION} payload but the function does not define a blockSuggestions handler`,
     );
   }
 

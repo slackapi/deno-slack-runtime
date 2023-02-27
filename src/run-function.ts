@@ -35,7 +35,6 @@ export const RunFunction = async (
   // we install any protocol-specific mocks required.
   if (walkieTalkie.install) walkieTalkie.install();
   let response: FunctionHandlerReturnArgs = {};
-  walkieTalkie.log("actually invoking function now");
   try {
     response = await functionModule.default({
       inputs,
@@ -48,12 +47,10 @@ export const RunFunction = async (
   } catch (e) {
     // In case this is a local-run, and we use a protocol that has specific rules around when we can use stdout/stderr,
     // we uninstall any protocol-specific mocks we installed earlier if userland code explodes, and re-throw the error
-    walkieTalkie.error("got error invoking function", e);
     if (walkieTalkie.uninstall) walkieTalkie.uninstall();
     throw e;
   }
   if (walkieTalkie.uninstall) walkieTalkie.uninstall();
-  walkieTalkie.log("got function response", response);
   // App has indicated there's an unrecoverable error with this function invocation
   if (response.error) {
     await client.apiCall("functions.completeError", {
@@ -63,7 +60,7 @@ export const RunFunction = async (
     return;
   }
 
-  // App has indicated it's function completed successfully
+  // App has indicated its function completed successfully
   if (response.completed) {
     await client.apiCall("functions.completeSuccess", {
       outputs: response.outputs,

@@ -14,6 +14,7 @@ export const run = async function (functionDir: string, input: string) {
 
   // Dummy protocol interface object that just directs relevant log/warn/error logging
   // to their usual locations; not relevant for ROSI apps, but relevant for local-run
+  // TODO: move this to deno-slack-hooks as NoopProtocol?
   const walkieTalkie: Protocol = {
     log: console.log,
     warn: console.warn,
