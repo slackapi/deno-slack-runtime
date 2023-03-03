@@ -1,4 +1,10 @@
-import { assertEquals, assertRejects, MockProtocol } from "../dev_deps.ts";
+import {
+  assertEquals,
+  assertRejects,
+  mock,
+  MockProtocol,
+  Spy,
+} from "../dev_deps.ts";
 import {
   getCommandline,
   parseDevDomain,
@@ -162,4 +168,99 @@ Deno.test("runWithOutgoingDomains fails with no functions", () => {
   assertRejects(() => {
     return runWithOutgoingDomains(createEmptyManifest, "", MockProtocol());
   });
+});
+
+Deno.test("runWithOutgoingDomains reports an error if the deno execPath cannot be found", async () => {
+  const createEmptyManifest = () => {
+    return Promise.resolve({
+      functions: {},
+    });
+  };
+  const protocol = MockProtocol();
+  const errorSpy = protocol.error as unknown as Spy;
+  const execPathSpy = mock.stub(Deno, "execPath", () => {
+    throw new Error("no idea where that is");
+  });
+  const runStub = mock.stub(
+    Deno,
+    "run",
+    () => ({
+      status: () =>
+        Promise.resolve({
+          success: true,
+          code: 0,
+          rid: 1,
+          pid: 2,
+          stdout: {},
+          stderr: {},
+        }),
+      rid: 1,
+      pid: 2,
+      // @ts-ignore we dont care about these Process properties for testing purposes
+      stdin: {},
+      // @ts-ignore we dont care about these Process properties for testing purposes
+      stdout: {},
+      // @ts-ignore we dont care about these Process properties for testing purposes
+      stderr: {},
+    }),
+  );
+  try {
+    await runWithOutgoingDomains(createEmptyManifest, "", protocol);
+  } finally {
+    execPathSpy.restore();
+    runStub.restore();
+  }
+  mock.assertSpyCallArg(
+    errorSpy,
+    0,
+    0,
+    "Error determining deno executable path: ",
+  );
+});
+
+Deno.test("runWithOutgoingDomains exits the Deno process if the local run process exits with a non-zero status code", async () => {
+  const createEmptyManifest = () => {
+    return Promise.resolve({
+      functions: {},
+    });
+  };
+  const protocol = MockProtocol();
+  const exitSpy = mock.spy();
+  const exitStub = mock.stub(Deno, "exit", exitSpy as unknown as () => never);
+  const exitCode = 1337;
+  const runStub = mock.stub(
+    Deno,
+    "run",
+    () => ({
+      status: () =>
+        Promise.resolve({
+          success: false,
+          code: exitCode,
+          rid: 1,
+          pid: 2,
+          stdout: {},
+          stderr: {},
+        }),
+      rid: 1,
+      pid: 2,
+      // @ts-ignore we dont care about these Process properties for testing purposes
+      stdin: {},
+      // @ts-ignore we dont care about these Process properties for testing purposes
+      stdout: {},
+      // @ts-ignore we dont care about these Process properties for testing purposes
+      stderr: {},
+    }),
+  );
+  try {
+    await runWithOutgoingDomains(createEmptyManifest, "", protocol);
+  } finally {
+    runStub.restore();
+    exitStub.restore();
+  }
+  mock.assertSpyCallArg(
+    exitSpy,
+    0,
+    0,
+    exitCode,
+  );
 });
