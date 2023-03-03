@@ -122,6 +122,29 @@ Deno.test("getCommandline handles root paths", () => {
   ]);
 });
 
+Deno.test("getCommandline appends protocol-specific CLI flags if they exist", () => {
+  const protocol = MockProtocol();
+  protocol.getCLIFlags = () => ["--mycustomflag"];
+  const command = getCommandline(
+    "file:///local-run.ts",
+    FAKE_DENO_PATH,
+    fakeManifest("example.com"),
+    "",
+    protocol,
+  );
+  assertEquals(command, [
+    FAKE_DENO_PATH,
+    "run",
+    "-q",
+    "--config=deno.jsonc",
+    "--allow-read",
+    "--allow-env",
+    "--allow-net=example.com,slack.com,deno.land",
+    "file:///local-run-function.ts",
+    "--mycustomflag",
+  ]);
+});
+
 Deno.test("parseDevDomain parses the right flag", () => {
   const domain = parseDevDomain(["--sdk-slack-dev-domain=foo.com"]);
   assertEquals(domain, "foo.com");
