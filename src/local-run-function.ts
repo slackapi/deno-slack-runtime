@@ -15,7 +15,7 @@ export const runLocally = async function (
   parse: typeof ParsePayload,
   readStdin: typeof readAll,
   dispatch: typeof DispatchPayload,
-  walkieTalkie: Protocol,
+  hookCLI: Protocol,
 ): Promise<void> {
   const workingDirectory = Deno.cwd();
   const manifest = await create({
@@ -28,12 +28,12 @@ export const runLocally = async function (
       `No function definitions were found in the manifest! manifest.functions: ${manifest.functions}`,
     );
   }
+  // The `start` hook, which powers local run, expects event payloads over stdin
   const payload = await parse(readStdin);
-  walkieTalkie.log("Payload predispatch is", payload);
 
   // Finds the corresponding function in the manifest definition, and then uses
   // the `source_file` property to determine the function module file location
-  const resp = await dispatch(payload, walkieTalkie, (functionCallbackId) => {
+  const resp = await dispatch(payload, hookCLI, (functionCallbackId) => {
     const functionDefn = manifest.functions[functionCallbackId];
     if (!functionDefn) {
       throw new Error(
@@ -46,18 +46,17 @@ export const runLocally = async function (
 
     return functionFile;
   });
-  walkieTalkie.log("Dispatch response is", resp);
   // Use the specific protocol implementation to respond to the CLI
-  walkieTalkie.respond(JSON.stringify(resp || {}));
+  hookCLI.respond(JSON.stringify(resp || {}));
 };
 
 if (import.meta.main) {
-  const walkieTalkie = getProtocolInterface(Deno.args);
+  const hookCLI = getProtocolInterface(Deno.args);
   await runLocally(
     createManifest,
     ParsePayload,
     readAll,
     DispatchPayload,
-    walkieTalkie,
+    hookCLI,
   );
 }

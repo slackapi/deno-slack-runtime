@@ -43,7 +43,7 @@ export const RunFunction = async (
   // App has indicated there's an unrecoverable error with this function invocation
   if (error) {
     await client.apiCall("functions.completeError", {
-      error: error,
+      error,
       function_execution_id: functionExecutionId,
     });
     return;
@@ -52,7 +52,7 @@ export const RunFunction = async (
   // App has indicated its function completed successfully
   if (completed) {
     await client.apiCall("functions.completeSuccess", {
-      outputs: outputs,
+      outputs,
       function_execution_id: functionExecutionId,
     });
     return;

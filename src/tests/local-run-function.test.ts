@@ -1,4 +1,10 @@
-import { assertExists, assertRejects, mock } from "../dev_deps.ts";
+import {
+  assertExists,
+  assertRejects,
+  mock,
+  MockProtocol,
+  Spy,
+} from "../dev_deps.ts";
 import { runLocally } from "../local-run-function.ts";
 import { BaseEventInvocationBody, InvocationPayload } from "../types.ts";
 
@@ -37,6 +43,7 @@ Deno.test("runLocally function sad path", async (t) => {
             fakeParse,
             fakeStdinReader,
             noop,
+            MockProtocol(),
           ),
         Error,
         "No function definitions",
@@ -52,7 +59,8 @@ Deno.test("runLocally function sad path", async (t) => {
             (_) => (Promise.resolve({ functions: {} })),
             fakeParse,
             fakeStdinReader,
-            (_, getFile) => Promise.resolve(getFile(ID)),
+            (_payload, _protocol, getFile) => Promise.resolve(getFile(ID)),
+            MockProtocol(),
           ),
         Error,
         "No function definition for function callback id",
@@ -63,17 +71,22 @@ Deno.test("runLocally function sad path", async (t) => {
 
 Deno.test("runLocally function happy path", async (t) => {
   await t.step(
-    "should feed dispatch response as stringified JSON to stdout",
+    "should feed dispatch response as stringified JSON to protocol respond method",
     async () => {
-      const consoleLogSpy = mock.spy(console, "log");
+      const protocol = MockProtocol();
       await runLocally(
         fakeManifest,
         fakeParse,
         fakeStdinReader,
         () => Promise.resolve({ something: true }),
+        protocol,
       );
-      mock.assertSpyCallArg(consoleLogSpy, 0, 0, `{"something":true}`);
-      consoleLogSpy.restore();
+      mock.assertSpyCallArg(
+        protocol.respond as unknown as Spy,
+        0,
+        0,
+        `{"something":true}`,
+      );
     },
   );
 });

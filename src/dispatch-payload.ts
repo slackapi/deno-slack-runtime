@@ -33,7 +33,7 @@ type GetFunctionFileCallback = {
 export const DispatchPayload = async (
   // deno-lint-ignore no-explicit-any
   payload: InvocationPayload<any>,
-  walkieTalkie: Protocol,
+  hookCLI: Protocol,
   getFunctionFile: GetFunctionFileCallback,
 ) => {
   const eventType = payload?.body?.event?.type || payload?.body?.type || "";
@@ -42,7 +42,7 @@ export const DispatchPayload = async (
 
   // If we can't find a callback_id, we'll warn about it, then ack the event so we don't retry.
   if (!functionCallbackId) {
-    walkieTalkie.warn(
+    hookCLI.warn(
       `Could not find the function "callback_id" in the payload for an event type of "${
         eventType || "unknown"
       }"`,
@@ -103,7 +103,7 @@ export const DispatchPayload = async (
       if (hasUnhandledEventHandler(functionModule)) {
         resp = await RunUnhandledEvent(payload, functionModule);
       } else {
-        walkieTalkie.warn(handlerError.message);
+        hookCLI.warn(handlerError.message);
       }
     } else if (isAllowNetError(handlerError)) {
       handlerError.message =

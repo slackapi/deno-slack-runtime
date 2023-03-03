@@ -18,7 +18,8 @@ export const run = async function (functionDir: string, input: string) {
 
   // Dummy protocol interface object that just directs relevant log/warn/error logging
   // to their usual locations; not relevant for ROSI apps, thus we provide this simple wrapper
-  const walkieTalkie: Protocol = {
+  const hookCLI: Protocol = {
+    name: "ROSIProtocol",
     log: console.log,
     warn: console.warn,
     error: console.error,
@@ -29,7 +30,7 @@ export const run = async function (functionDir: string, input: string) {
   // See the deno-slack-hooks repo for how the bundling and package is done
   const resp = await DispatchPayload(
     payload,
-    walkieTalkie,
+    hookCLI,
     (functionCallbackId) => {
       return `${functionDir}/${functionCallbackId}.js`;
     },

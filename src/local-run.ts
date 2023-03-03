@@ -94,7 +94,7 @@ export const getCommandline = function (
 export const runWithOutgoingDomains = async function (
   create: typeof createManifest,
   devDomain: string,
-  walkieTalkie: Protocol,
+  hookCLI: Protocol,
 ): Promise<void> {
   const workingDirectory = Deno.cwd();
   const manifest = await create({
@@ -113,7 +113,7 @@ export const runWithOutgoingDomains = async function (
   try {
     denoExecutablePath = Deno.execPath();
   } catch (e) {
-    walkieTalkie.error("Error determining deno executable path: ", e);
+    hookCLI.error("Error determining deno executable path: ", e);
     // TODO: should we throw here?
   }
 
@@ -122,11 +122,7 @@ export const runWithOutgoingDomains = async function (
     denoExecutablePath,
     manifest,
     devDomain,
-    walkieTalkie,
-  );
-  walkieTalkie.log(
-    "command to be invoked in deno.run is",
-    command.join(" ").split("").join("."),
+    hookCLI,
   );
 
   const p = Deno.run({ cmd: command });

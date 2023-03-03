@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "../dev_deps.ts";
+import { assertEquals, assertRejects, MockProtocol } from "../dev_deps.ts";
 import {
   getCommandline,
   parseDevDomain,
@@ -27,6 +27,7 @@ Deno.test("getCommandline issues right command no dev domain", () => {
     FAKE_DENO_PATH,
     fakeManifest("example.com"),
     "",
+    MockProtocol(),
   );
   assertEquals(command, [
     FAKE_DENO_PATH,
@@ -46,6 +47,7 @@ Deno.test("getCommandline issues right command with dev domain", () => {
     FAKE_DENO_PATH,
     fakeManifest("example.com"),
     "dev1234.slack.com",
+    MockProtocol(),
   );
   assertEquals(command, [
     FAKE_DENO_PATH,
@@ -66,6 +68,7 @@ Deno.test("getCommandline issues right command with no outgoing domains", () => 
     FAKE_DENO_PATH,
     fakeManifest(),
     "",
+    MockProtocol(),
   );
   assertEquals(command, [
     FAKE_DENO_PATH,
@@ -85,6 +88,7 @@ Deno.test("getCommandline issues right command with a local file module", () => 
     FAKE_DENO_PATH,
     fakeManifest(),
     "",
+    MockProtocol(),
   );
   assertEquals(command, [
     FAKE_DENO_PATH,
@@ -104,6 +108,7 @@ Deno.test("getCommandline handles root paths", () => {
     FAKE_DENO_PATH,
     fakeManifest("example.com"),
     "",
+    MockProtocol(),
   );
   assertEquals(command, [
     FAKE_DENO_PATH,
@@ -132,6 +137,6 @@ Deno.test("runWithOutgoingDomains fails with no functions", () => {
     return await {};
   };
   assertRejects(() => {
-    return runWithOutgoingDomains(createEmptyManifest, "", () => {});
+    return runWithOutgoingDomains(createEmptyManifest, "", MockProtocol());
   });
 });
