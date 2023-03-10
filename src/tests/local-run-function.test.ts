@@ -71,6 +71,7 @@ Deno.test("runLocally function happy path", async (t) => {
   await t.step("should be defined", () => {
     assertExists(runLocally);
   });
+
   await t.step(
     "should feed dispatch response as stringified JSON to protocol respond method",
     async () => {
@@ -87,6 +88,26 @@ Deno.test("runLocally function happy path", async (t) => {
         0,
         0,
         `{"something":true}`,
+      );
+    },
+  );
+
+  await t.step(
+    "should provide a fallback '{}' string response to protocol respond method if function does not return a response",
+    async () => {
+      const protocol = MockProtocol();
+      await runLocally(
+        fakeManifest,
+        fakeParse,
+        fakeStdinReader,
+        () => Promise.resolve(undefined),
+        protocol,
+      );
+      mock.assertSpyCallArg(
+        protocol.respond as unknown as Spy,
+        0,
+        0,
+        `{}`,
       );
     },
   );
