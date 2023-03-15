@@ -175,74 +175,84 @@ Deno.test("runWithOutgoingDomains function", async (t) => {
     });
   });
 
-  await t.step("reports an error if the deno execPath cannot be found", async () => {
-    const createEmptyManifest = () => {
-      return Promise.resolve({
-        functions: {},
+  await t.step(
+    "reports an error if the deno execPath cannot be found",
+    async () => {
+      const createEmptyManifest = () => {
+        return Promise.resolve({
+          functions: {},
+        });
+      };
+      const protocol = MockProtocol();
+      const errorSpy = protocol.error as unknown as Spy;
+      const execPathSpy = mock.stub(Deno, "execPath", () => {
+        throw new Error("no idea where that is");
       });
-    };
-    const protocol = MockProtocol();
-    const errorSpy = protocol.error as unknown as Spy;
-    const execPathSpy = mock.stub(Deno, "execPath", () => {
-      throw new Error("no idea where that is");
-    });
-    const runStub = mock.stub(
-      Deno,
-      "run",
-      () => ({
-        status: () =>
-          Promise.resolve({
-            success: true,
-            code: 0,
-          }),
-      } as unknown as Deno.Process<Deno.RunOptions>),
-    );
-    try {
-      await runWithOutgoingDomains(createEmptyManifest, "", protocol);
-    } finally {
-      execPathSpy.restore();
-      runStub.restore();
-    }
-    mock.assertSpyCallArg(
-      errorSpy,
-      0,
-      0,
-      "Error determining deno executable path: ",
-    );
-  });
+      const runStub = mock.stub(
+        Deno,
+        "run",
+        () => ({
+          status: () =>
+            Promise.resolve({
+              success: true,
+              code: 0,
+            }),
+        } as unknown as Deno.Process<Deno.RunOptions>),
+      );
+      try {
+        await runWithOutgoingDomains(createEmptyManifest, "", protocol);
+      } finally {
+        execPathSpy.restore();
+        runStub.restore();
+      }
+      mock.assertSpyCallArg(
+        errorSpy,
+        0,
+        0,
+        "Error determining deno executable path: ",
+      );
+    },
+  );
 
-  await t.step("exits the Deno process if the local run process exits with a non-zero status code", async () => {
-    const createEmptyManifest = () => {
-      return Promise.resolve({
-        functions: {},
-      });
-    };
-    const protocol = MockProtocol();
-    const exitSpy = mock.spy();
-    const exitStub = mock.stub(Deno, "exit", exitSpy as unknown as () => never);
-    const exitCode = 1337;
-    const runStub = mock.stub(
-      Deno,
-      "run",
-      () => ({
-        status: () =>
-          Promise.resolve({
-            success: false,
-            code: exitCode,
-          }),
-      } as unknown as Deno.Process<Deno.RunOptions>),
-    );
-    try {
-      await runWithOutgoingDomains(createEmptyManifest, "", protocol);
-    } finally {
-      runStub.restore();
-      exitStub.restore();
-    }
-    mock.assertSpyCallArg(
-      exitSpy,
-      0,
-      0,
-      exitCode,
-    );
-  });
+  await t.step(
+    "exits the Deno process if the local run process exits with a non-zero status code",
+    async () => {
+      const createEmptyManifest = () => {
+        return Promise.resolve({
+          functions: {},
+        });
+      };
+      const protocol = MockProtocol();
+      const exitSpy = mock.spy();
+      const exitStub = mock.stub(
+        Deno,
+        "exit",
+        exitSpy as unknown as () => never,
+      );
+      const exitCode = 1337;
+      const runStub = mock.stub(
+        Deno,
+        "run",
+        () => ({
+          status: () =>
+            Promise.resolve({
+              success: false,
+              code: exitCode,
+            }),
+        } as unknown as Deno.Process<Deno.RunOptions>),
+      );
+      try {
+        await runWithOutgoingDomains(createEmptyManifest, "", protocol);
+      } finally {
+        runStub.restore();
+        exitStub.restore();
+      }
+      mock.assertSpyCallArg(
+        exitSpy,
+        0,
+        0,
+        exitCode,
+      );
+    },
+  );
 });
