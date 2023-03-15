@@ -6,6 +6,5 @@ export { BaseSlackAPIClient } from "https://deno.land/x/deno_slack_api@0.0.2/bas
 //       used during local-run, which in the default/legacy protocol, logging to stdout is unlimited for that specific hook.
 export { createManifest } from "https://deno.land/x/deno_slack_builder@0.0.14/manifest.ts";
 export { parse } from "https://deno.land/std@0.99.0/flags/mod.ts";
-// TODO: update the URLs here once the protocols repo passes review and has a release
-export { getProtocolInterface } from "https://raw.githubusercontent.com/slackapi/deno-slack-protocols/initial/src/mod.ts";
-export type { Protocol } from "https://raw.githubusercontent.com/slackapi/deno-slack-protocols/initial/src/types.ts";
+export { getProtocolInterface } from "https://deno.land/x/deno_slack_protocols@0.0.2/mod.ts";
+export type { Protocol } from "https://deno.land/x/deno_slack_protocols@0.0.2/types.ts";
