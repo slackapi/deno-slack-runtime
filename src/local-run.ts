@@ -23,7 +23,10 @@ export const parseDevDomain = (args: string[]): string => {
  * @param filename The name of the file to return the URL for
  * @returns
  */
-const findRelativeFile = (mainModule: string, filename: string): string => {
+export const findRelativeFile = (
+  mainModule: string,
+  filename: string,
+): string => {
   const moduleUrl = new URL(mainModule);
   const path = moduleUrl.pathname;
   const pathComponents = path.split("/");
