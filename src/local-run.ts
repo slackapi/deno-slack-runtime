@@ -117,7 +117,6 @@ export const runWithOutgoingDomains = async function (
     denoExecutablePath = Deno.execPath();
   } catch (e) {
     hookCLI.error("Error determining deno executable path: ", e);
-    // TODO: should we throw here?
   }
 
   const command = getCommandline(
