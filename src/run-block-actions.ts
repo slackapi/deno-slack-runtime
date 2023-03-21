@@ -26,9 +26,9 @@ export const RunBlockAction = async (
     );
   }
 
-  // We don't catch any errors the handlers may throw, we let them throw, and stop the process
+  // We don't catch any errors the handler may throw, we let them throw, and stop the process
   // deno-lint-ignore no-explicit-any
-  const actionsResp: any = await handler({
+  const response: any = await handler({
     inputs,
     env,
     token,
@@ -38,5 +38,5 @@ export const RunBlockAction = async (
     action: body.actions[0],
   });
 
-  return actionsResp || {};
+  return response || {};
 };

@@ -1,4 +1,11 @@
-import { assertExists, assertRejects, mock } from "../dev_deps.ts";
+import {
+  assertExists,
+  assertRejects,
+  assertStringIncludes,
+  mock,
+  MockProtocol,
+  Spy,
+} from "../dev_deps.ts";
 import { runLocally } from "../local-run-function.ts";
 import { BaseEventInvocationBody, InvocationPayload } from "../types.ts";
 
@@ -24,9 +31,6 @@ const fakeStdinReader = (
 ): Promise<Uint8Array> => Promise.resolve(new Uint8Array(0));
 
 Deno.test("runLocally function sad path", async (t) => {
-  await t.step("should be defined", () => {
-    assertExists(runLocally);
-  });
   await t.step(
     "should throw if manifest does not contain a functions field",
     async () => {
@@ -37,6 +41,7 @@ Deno.test("runLocally function sad path", async (t) => {
             fakeParse,
             fakeStdinReader,
             noop,
+            MockProtocol(),
           ),
         Error,
         "No function definitions",
@@ -52,7 +57,8 @@ Deno.test("runLocally function sad path", async (t) => {
             (_) => (Promise.resolve({ functions: {} })),
             fakeParse,
             fakeStdinReader,
-            (_, getFile) => Promise.resolve(getFile(ID)),
+            (_payload, _protocol, getFile) => Promise.resolve(getFile(ID)),
+            MockProtocol(),
           ),
         Error,
         "No function definition for function callback id",
@@ -62,18 +68,74 @@ Deno.test("runLocally function sad path", async (t) => {
 });
 
 Deno.test("runLocally function happy path", async (t) => {
+  await t.step("should be defined", () => {
+    assertExists(runLocally);
+  });
+
   await t.step(
-    "should feed dispatch response as stringified JSON to stdout",
+    "should feed dispatch response as stringified JSON to protocol respond method",
     async () => {
-      const consoleLogSpy = mock.spy(console, "log");
+      const protocol = MockProtocol();
       await runLocally(
         fakeManifest,
         fakeParse,
         fakeStdinReader,
         () => Promise.resolve({ something: true }),
+        protocol,
       );
-      mock.assertSpyCallArg(consoleLogSpy, 0, 0, `{"something":true}`);
-      consoleLogSpy.restore();
+      mock.assertSpyCallArg(
+        protocol.respond as unknown as Spy,
+        0,
+        0,
+        `{"something":true}`,
+      );
+    },
+  );
+
+  await t.step(
+    "should provide a fallback '{}' string response to protocol respond method if function does not return a response",
+    async () => {
+      const protocol = MockProtocol();
+      await runLocally(
+        fakeManifest,
+        fakeParse,
+        fakeStdinReader,
+        () => Promise.resolve(undefined),
+        protocol,
+      );
+      mock.assertSpyCallArg(
+        protocol.respond as unknown as Spy,
+        0,
+        0,
+        `{}`,
+      );
+    },
+  );
+
+  await t.step(
+    "should use dispatch function to route to correct file",
+    async () => {
+      const protocol = MockProtocol();
+      await runLocally(
+        fakeManifest,
+        fakeParse,
+        fakeStdinReader,
+        async (_evtPayload, _protocol, functionFinder) => {
+          const sourceFile = functionFinder(ID);
+          assertStringIncludes(
+            sourceFile as string,
+            (await fakeManifest({})).functions[ID].source_file,
+          );
+          return { something: true };
+        },
+        protocol,
+      );
+      mock.assertSpyCallArg(
+        protocol.respond as unknown as Spy,
+        0,
+        0,
+        `{"something":true}`,
+      );
     },
   );
 });

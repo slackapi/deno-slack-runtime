@@ -4,6 +4,8 @@ import {
   assertMatch,
   assertRejects,
   mock,
+  MockProtocol,
+  Spy,
 } from "../dev_deps.ts";
 import { DispatchPayload } from "../dispatch-payload.ts";
 import {
@@ -25,46 +27,60 @@ Deno.test("DispatchPayload function", async (t) => {
     "should throw if an unrecognized event type is dispatched that has a function callback_id",
     async () => {
       await assertRejects(() =>
-        DispatchPayload({
-          body: {
-            type: "messinwitcha",
-            function_data: { function: { callback_id: "test" } },
+        DispatchPayload(
+          {
+            body: {
+              type: "messinwitcha",
+              function_data: { function: { callback_id: "test" } },
+            },
+            context: {
+              bot_access_token: "12345",
+              team_id: "123",
+              variables: {},
+            },
           },
-          context: { bot_access_token: "12345", team_id: "123", variables: {} },
-        }, noop)
+          MockProtocol(),
+          noop,
+        )
       );
     },
   );
   await t.step(
     "should warn if no function callback_id present in payload and return an empty response to ack the event",
     async () => {
-      const warnSpy = mock.spy(console, "warn");
+      const protocol = MockProtocol();
 
-      const result = await DispatchPayload({
-        body: { type: "function_executed", event: {} },
-        context: { bot_access_token: "12345", team_id: "123", variables: {} },
-      }, noop);
+      const result = await DispatchPayload(
+        {
+          body: { type: "function_executed", event: {} },
+          context: { bot_access_token: "12345", team_id: "123", variables: {} },
+        },
+        protocol,
+        noop,
+      );
 
+      const warnSpy = protocol.warn as unknown as Spy;
       mock.assertSpyCalls(warnSpy, 1);
       const warnMsg = warnSpy.calls[0].args[0] as string;
       assertMatch(warnMsg, /function_executed/);
       assertEquals(result, {});
-
-      warnSpy.restore();
     },
   );
   await t.step(
     "should warn if no function callback_id present in payload and type is inside event",
     async () => {
-      const warnSpy = mock.spy(console, "warn");
+      const protocol = MockProtocol();
 
-      const result = await DispatchPayload({
-        body: { event: { type: "some_random_type" } },
-        context: { bot_access_token: "12345", team_id: "123", variables: {} },
-      }, noop);
+      const result = await DispatchPayload(
+        {
+          body: { event: { type: "some_random_type" } },
+          context: { bot_access_token: "12345", team_id: "123", variables: {} },
+        },
+        protocol,
+        noop,
+      );
 
-      warnSpy.restore();
-
+      const warnSpy = protocol.warn as unknown as Spy;
       mock.assertSpyCalls(warnSpy, 1);
       const warnMsg = warnSpy.calls[0].args[0] as string;
       assertMatch(warnMsg, /some_random_type/);
@@ -74,14 +90,18 @@ Deno.test("DispatchPayload function", async (t) => {
   await t.step(
     "should warn if no function callback_id present in payload and no type present",
     async () => {
-      const warnSpy = mock.spy(console, "warn");
+      const protocol = MockProtocol();
 
-      const result = await DispatchPayload({
-        body: {},
-        context: { bot_access_token: "12345", team_id: "123", variables: {} },
-      }, noop);
-      warnSpy.restore();
+      const result = await DispatchPayload(
+        {
+          body: {},
+          context: { bot_access_token: "12345", team_id: "123", variables: {} },
+        },
+        protocol,
+        noop,
+      );
 
+      const warnSpy = protocol.warn as unknown as Spy;
       mock.assertSpyCalls(warnSpy, 1);
       const warnMsg = warnSpy.calls[0].args[0] as string;
       assertMatch(warnMsg, /unknown/);
@@ -103,6 +123,7 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
       const payload = generatePayload(`${functionsDir}/wacky`);
       const fnModule = await DispatchPayload(
         payload,
+        MockProtocol(),
         (functionCallbackId) => {
           return `${functionCallbackId}.js`;
         },
@@ -116,9 +137,13 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
       const payload = generatePayload(`${functionsDir}/funky`);
       await assertRejects(
         async () => {
-          return await DispatchPayload(payload, (functionCallbackId) => {
-            return `${functionCallbackId}.js`;
-          });
+          return await DispatchPayload(
+            payload,
+            MockProtocol(),
+            (functionCallbackId) => {
+              return `${functionCallbackId}.js`;
+            },
+          );
         },
         Error,
         "Module not found",
@@ -138,7 +163,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
 
     const unhandledEventSpy = mock.spy(fnModule, "unhandledEvent");
 
-    await DispatchPayload(payload, () => fnModule);
+    await DispatchPayload(payload, MockProtocol(), () => fnModule);
 
     mock.assertSpyCall(unhandledEventSpy, 0, {
       args: [{
@@ -165,7 +190,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
       const defaultSpy = mock.spy(fnModule, "default");
       const unhandledEventSpy = mock.spy(fnModule, "unhandledEvent");
 
-      await DispatchPayload(payload, () => fnModule);
+      await DispatchPayload(payload, MockProtocol(), () => fnModule);
 
       mock.assertSpyCalls(unhandledEventSpy, 0);
       mock.assertSpyCall(defaultSpy, 0, {
@@ -191,7 +216,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
 
     const unhandledEventSpy = mock.spy(fnModule, "unhandledEvent");
 
-    await DispatchPayload(payload, () => fnModule);
+    await DispatchPayload(payload, MockProtocol(), () => fnModule);
 
     mock.assertSpyCall(unhandledEventSpy, 0, {
       args: [{
@@ -219,7 +244,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
       const blockActionsSpy = mock.spy(fnModule, "blockActions");
       const unhandledEventSpy = mock.spy(fnModule, "unhandledEvent");
 
-      await DispatchPayload(payload, () => fnModule);
+      await DispatchPayload(payload, MockProtocol(), () => fnModule);
 
       mock.assertSpyCalls(unhandledEventSpy, 0);
       mock.assertSpyCall(blockActionsSpy, 0, {
@@ -248,7 +273,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
 
       const unhandledEventSpy = mock.spy(fnModule, "unhandledEvent");
 
-      await DispatchPayload(payload, () => fnModule);
+      await DispatchPayload(payload, MockProtocol(), () => fnModule);
 
       mock.assertSpyCall(unhandledEventSpy, 0, {
         args: [{
@@ -277,7 +302,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
       const blockSuggestionSpy = mock.spy(fnModule, "blockSuggestion");
       const unhandledEventSpy = mock.spy(fnModule, "unhandledEvent");
 
-      await DispatchPayload(payload, () => fnModule);
+      await DispatchPayload(payload, MockProtocol(), () => fnModule);
 
       mock.assertSpyCalls(unhandledEventSpy, 0);
       mock.assertSpyCall(blockSuggestionSpy, 0, {
@@ -303,7 +328,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
 
     const unhandledEventSpy = mock.spy(fnModule, "unhandledEvent");
 
-    await DispatchPayload(payload, () => fnModule);
+    await DispatchPayload(payload, MockProtocol(), () => fnModule);
 
     mock.assertSpyCall(unhandledEventSpy, 0, {
       args: [{
@@ -331,7 +356,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
       const viewClosedSpy = mock.spy(fnModule, "viewClosed");
       const unhandledEventSpy = mock.spy(fnModule, "unhandledEvent");
 
-      await DispatchPayload(payload, () => fnModule);
+      await DispatchPayload(payload, MockProtocol(), () => fnModule);
 
       mock.assertSpyCalls(unhandledEventSpy, 0);
       mock.assertSpyCall(viewClosedSpy, 0, {
@@ -360,7 +385,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
 
       const unhandledEventSpy = mock.spy(fnModule, "unhandledEvent");
 
-      await DispatchPayload(payload, () => fnModule);
+      await DispatchPayload(payload, MockProtocol(), () => fnModule);
 
       mock.assertSpyCall(unhandledEventSpy, 0, {
         args: [{
@@ -389,7 +414,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
       const viewSubmissionSpy = mock.spy(fnModule, "viewSubmission");
       const unhandledEventSpy = mock.spy(fnModule, "unhandledEvent");
 
-      await DispatchPayload(payload, () => fnModule);
+      await DispatchPayload(payload, MockProtocol(), () => fnModule);
 
       mock.assertSpyCalls(unhandledEventSpy, 0);
       mock.assertSpyCall(viewSubmissionSpy, 0, {
@@ -415,13 +440,12 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
         default: () => ({}),
       };
 
-      const consoleWarnSpy = mock.spy(console, "warn");
+      const protocol = MockProtocol();
+      const warnSpy = protocol.warn as unknown as Spy;
 
-      await DispatchPayload(payload, () => fnModule);
+      await DispatchPayload(payload, protocol, () => fnModule);
 
-      mock.assertSpyCalls(consoleWarnSpy, 1);
-
-      consoleWarnSpy.restore();
+      mock.assertSpyCalls(warnSpy, 1);
     },
   );
 
@@ -434,13 +458,12 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
         default: () => ({}),
       };
 
-      const consoleWarnSpy = mock.spy(console, "warn");
+      const protocol = MockProtocol();
+      const warnSpy = protocol.warn as unknown as Spy;
 
-      await DispatchPayload(payload, () => fnModule);
+      await DispatchPayload(payload, protocol, () => fnModule);
 
-      mock.assertSpyCalls(consoleWarnSpy, 1);
-
-      consoleWarnSpy.restore();
+      mock.assertSpyCalls(warnSpy, 1);
     },
   );
 
@@ -455,7 +478,9 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
         },
       };
 
-      await assertRejects(() => DispatchPayload(payload, () => fnModule));
+      await assertRejects(() =>
+        DispatchPayload(payload, MockProtocol(), () => fnModule)
+      );
     },
   );
 });
@@ -473,7 +498,7 @@ Deno.test("DispatchPayload custom error handling", async (t) => {
       };
 
       await assertRejects(
-        () => DispatchPayload(payload, () => fnModule),
+        () => DispatchPayload(payload, MockProtocol(), () => fnModule),
         Error,
         "boom",
       );
@@ -496,7 +521,7 @@ Deno.test("DispatchPayload custom error handling", async (t) => {
       };
 
       await assertRejects(
-        () => DispatchPayload(payload, () => fnModule),
+        () => DispatchPayload(payload, MockProtocol(), () => fnModule),
         Error,
         "add the domain to your manifest's `outgoingDomains`",
       );

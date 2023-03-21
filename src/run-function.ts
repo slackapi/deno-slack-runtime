@@ -30,18 +30,15 @@ export const RunFunction = async (
   });
 
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process
-  const {
-    completed = true,
-    outputs = {},
-    error,
-  } = await functionModule.default({
-    inputs,
-    env,
-    token,
-    team_id,
-    enterprise_id,
-    event: body.event,
-  });
+  const { completed = true, outputs = {}, error } = await functionModule
+    .default({
+      inputs,
+      env,
+      token,
+      team_id,
+      enterprise_id,
+      event: body.event,
+    });
 
   // App has indicated there's an unrecoverable error with this function invocation
   if (error) {
@@ -52,7 +49,7 @@ export const RunFunction = async (
     return;
   }
 
-  // App has indicated it's function completed successfully
+  // App has indicated its function completed successfully
   if (completed) {
     await client.apiCall("functions.completeSuccess", {
       outputs,

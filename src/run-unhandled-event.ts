@@ -23,10 +23,9 @@ export const RunUnhandledEvent = async (
   if (!handler) {
     throw new Error("No unhandledEvent handler");
   }
-
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process
   // deno-lint-ignore no-explicit-any
-  const closedResp: any = await handler({
+  const response: any = await handler({
     inputs,
     env,
     token,
@@ -35,7 +34,7 @@ export const RunUnhandledEvent = async (
     enterprise_id,
   });
 
-  return closedResp || {};
+  return response || {};
 };
 
 export class UnhandledEventError extends Error {
