@@ -1,7 +1,12 @@
-import { EventEmitter } from "https://deno.land/std@0.177.0/node/events.ts";
-import { setImmediate } from "https://deno.land/std@0.177.0/node/timers.ts";
-import Finity, { Configuration, Context, StateMachine } from "npm:finity";
-import { BaseSlackAPIClient } from "../deps.ts";
+import {
+  BaseSlackAPIClient,
+  Configuration,
+  Context,
+  EventEmitter,
+  setImmediate,
+  StateMachine,
+} from "../deps.ts";
+import Finity from "npm:finity@^0.5.4";
 import {
   sendWhileDisconnectedError,
   sendWhileNotReadyError,

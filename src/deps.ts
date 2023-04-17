@@ -6,3 +6,6 @@ export { createManifest } from "https://deno.land/x/deno_slack_builder@0.0.14/ma
 export { parse } from "https://deno.land/std@0.99.0/flags/mod.ts";
 export { getProtocolInterface } from "https://deno.land/x/deno_slack_protocols@0.0.2/mod.ts";
 export type { Protocol } from "https://deno.land/x/deno_slack_protocols@0.0.2/types.ts";
+export { EventEmitter } from "https://deno.land/std@0.177.0/node/events.ts";
+export { setImmediate } from "https://deno.land/std@0.177.0/node/timers.ts";
+export type { Configuration, Context, StateMachine } from "npm:finity@^0.5.4";
