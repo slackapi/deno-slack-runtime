@@ -6,8 +6,6 @@ import { InvocationPayload } from "./types.ts";
 const appToken = Deno.env.get("SLACK_CLI_XAPP");
 const bot_access_token = Deno.env.get("SLACK_CLI_XOXB") ?? "";
 
-const socketModeClient = new SocketModeClient({ appToken });
-
 const workingDirectory = Deno.cwd();
 const manifest = await createManifest({
   manifestOnly: true,
@@ -22,6 +20,11 @@ if (!manifest.functions) {
 
 const hookCLI = getProtocolInterface(Deno.args);
 
+const socketModeClient = new SocketModeClient({
+  appToken: appToken,
+  logger: hookCLI,
+});
+
 // Attach listeners to events by type. See: https://api.slack.com/events/message
 socketModeClient.on(
   "function_executed",
@@ -35,7 +38,7 @@ socketModeClient.on(
         variables: {},
       },
     };
-    const resp = await DispatchPayload(
+    await DispatchPayload(
       payload,
       hookCLI,
       (functionCallbackId) => {
@@ -52,9 +55,6 @@ socketModeClient.on(
         return functionFile;
       },
     );
-
-    console.log("MY RESPONSE");
-    console.log(JSON.stringify(resp || {}));
   },
 );
 

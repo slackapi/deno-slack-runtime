@@ -3,6 +3,8 @@ import {
   Configuration,
   Context,
   EventEmitter,
+  getProtocolInterface,
+  Protocol,
   setImmediate,
   StateMachine,
 } from "../deps.ts";
@@ -94,20 +96,20 @@ export class SocketModeClient extends EventEmitter {
   /**
    * Whether or not the client is currently connected to the web socket
    */
-  public connected: boolean = false;
+  public connected = false;
 
   /**
    * Whether or not the client has authenticated to the Socket Mode API.
    * This occurs when the connect method completes,
    * and a WebSocket URL is available for the client's connection.
    */
-  public authenticated: boolean = false;
+  public authenticated = false;
 
   /**
    * Returns true if the underlying WebSocket connection is active.
    */
   public isActive(): boolean {
-    console.debug(
+    this.logger.log(
       `Details of isActive() response (connected: ${this.connected}, authenticated: ${this.authenticated}, badConnection: ${this.badConnection})`,
     );
     return this.connected && this.authenticated && !this.badConnection;
@@ -118,9 +120,14 @@ export class SocketModeClient extends EventEmitter {
    */
   public websocket?: WebSocket;
 
+  /**
+   * This object's logger instance
+   */
+  private logger: Protocol;
+
   public constructor({
+    logger = undefined,
     autoReconnectEnabled = true,
-    clientPingTimeout = 5000,
     appToken = undefined,
   }: SocketModeOptions = {}) {
     super();
@@ -129,12 +136,17 @@ export class SocketModeClient extends EventEmitter {
         "Must provide an App-Level Token when initializing a Socket Mode Client",
       );
     }
-    this.clientPingTimeoutMillis = clientPingTimeout;
     this.webClient = new BaseSlackAPIClient(appToken);
+    // Setup the logger
+    if (typeof logger !== "undefined") {
+      this.logger = logger;
+    } else {
+      this.logger = getProtocolInterface([]);
+    }
 
     this.autoReconnectEnabled = autoReconnectEnabled;
     this.stateMachine = Finity.start(this.stateMachineConfig);
-    console.debug("The Socket Mode client is successfully initialized");
+    this.logger.log("The Socket Mode client is successfully initialized");
   }
 
   /**
@@ -143,7 +155,7 @@ export class SocketModeClient extends EventEmitter {
    * This method must be called before any messages can be sent or received.
    */
   public start(): Promise<AppsConnectionsOpenResponse> {
-    console.debug("Starting a Socket Mode client ...");
+    this.logger.log("Starting a Socket Mode client ...");
     // Delegate behavior to state machine
     this.stateMachine.handle(Event.Start);
     // Return a promise that resolves with the connection information
@@ -165,7 +177,7 @@ export class SocketModeClient extends EventEmitter {
    */
   public disconnect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      console.debug("Manually disconnecting this Socket Mode client");
+      this.logger.log("Manually disconnecting this Socket Mode client");
       // Resolve (or reject) on disconnect
       this.once(State.Disconnected, (err) => {
         if (err instanceof Error) {
@@ -188,17 +200,12 @@ export class SocketModeClient extends EventEmitter {
    */
   private stateMachine: StateMachine<State, Event>;
 
-  /**
-   * Internal count for managing the reconnection state
-   */
-  private numOfConsecutiveReconnectionFailures: number = 0;
-
   /* eslint-disable @typescript-eslint/indent, newline-per-chained-call */
   private connectingStateMachineConfig: Configuration<ConnectingState, Event> =
     Finity.configure<ConnectingState, Event>()
       .global()
       .onStateEnter((state) => {
-        console.debug(
+        this.logger.log(
           `Transitioning to state: ${State.Connecting}:${state}`,
         );
       })
@@ -211,12 +218,11 @@ export class SocketModeClient extends EventEmitter {
       )
       .transitionTo(ConnectingState.Failed)
       .state(ConnectingState.Reconnecting)
+      // deno-lint-ignore require-await
       .do(async () => {
         // Trying to reconnect after waiting for a bit...
-        this.numOfConsecutiveReconnectionFailures += 1;
-        const millisBeforeRetry = this.clientPingTimeoutMillis *
-          this.numOfConsecutiveReconnectionFailures;
-        console.debug(
+        const millisBeforeRetry = 1000;
+        this.logger.log(
           `Before trying to reconnect, this client will wait for ${millisBeforeRetry} milliseconds`,
         );
         setTimeout(() => {
@@ -236,14 +242,14 @@ export class SocketModeClient extends EventEmitter {
     Finity.configure<ConnectedState, Event>()
       .global()
       .onStateEnter((state) => {
-        console.debug(
+        this.logger.log(
           `Transitioning to state: ${State.Connected}:${state}`,
         );
       })
       .initialState(ConnectedState.Preparing)
       .do(async () => {
         if (this.isSwitchingConnection) {
-          this.switchWebSocketConnection();
+          await this.switchWebSocketConnection();
           this.badConnection = false;
         }
       })
@@ -262,7 +268,7 @@ export class SocketModeClient extends EventEmitter {
   >()
     .global()
     .onStateEnter((state, context) => {
-      console.debug(`Transitioning to state: ${state}`);
+      this.logger.log(`Transitioning to state: ${state}`);
       if (state === State.Disconnected) {
         // Emits a `disconnected` event with a possible error object (might be undefined)
         this.emit(state, context.eventPayload);
@@ -276,7 +282,7 @@ export class SocketModeClient extends EventEmitter {
     .transitionTo(State.Connecting)
     .state(State.Connecting)
     .onEnter(() => {
-      console.info("Going to establish a new connection to Slack ...");
+      this.logger.warn("Going to establish a new connection to Slack ...");
     })
     .submachine(this.connectingStateMachineConfig)
     .on(Event.ServerHello)
@@ -296,7 +302,7 @@ export class SocketModeClient extends EventEmitter {
     .state(State.Connected)
     .onEnter(() => {
       this.connected = true;
-      console.info("Now connected to Slack");
+      this.logger.warn("Now connected to Slack");
     })
     .submachine(this.connectedStateMachineConfig)
     .on(Event.WebSocketClose)
@@ -330,8 +336,9 @@ export class SocketModeClient extends EventEmitter {
     .onExit()
     .state(State.Reconnecting)
     .onEnter(() => {
-      console.info("Reconnecting to Slack ...");
+      this.logger.warn("Reconnecting to Slack ...");
     })
+    // deno-lint-ignore require-await
     .do(async () => {
       this.isSwitchingConnection = true;
     })
@@ -339,11 +346,11 @@ export class SocketModeClient extends EventEmitter {
     .onFailure().transitionTo(State.Failed)
     .state(State.Disconnecting)
     .onEnter(() => {
-      console.info("Disconnecting ...");
+      this.logger.warn("Disconnecting ...");
     })
     .do(async () => {
-      this.terminateAllConnections();
-      console.info("Disconnected from Slack");
+      await this.terminateAllConnections();
+      this.logger.warn("Disconnected from Slack");
     })
     .onSuccess().transitionTo(State.Disconnected)
     .onFailure().transitionTo(State.Failed)
@@ -361,19 +368,14 @@ export class SocketModeClient extends EventEmitter {
   private webClient: BaseSlackAPIClient;
 
   /**
-   * How long to wait for pings from server before timing out
-   */
-  private clientPingTimeoutMillis: number;
-
-  /**
    * Used to see if a WebSocket stops sending heartbeats and is deemed bad
    */
-  private badConnection: boolean = false;
+  private badConnection = false;
 
   /**
    * This flag can be true when this client is switching to a new connection.
    */
-  private isSwitchingConnection: boolean = false;
+  private isSwitchingConnection = false;
 
   /**
    * Method for sending an outgoing message of an arbitrary type over the WebSocket connection.
@@ -385,17 +387,18 @@ export class SocketModeClient extends EventEmitter {
     const _body = typeof body === "string" ? { text: body } : body;
     const message = { envelope_id: id, payload: { ..._body } };
 
+    // deno-lint-ignore no-unused-vars
     return new Promise((resolve, reject) => {
-      console.debug(
+      this.logger.log(
         `send() method was called in state: ${this.stateMachine.getCurrentState()}, state hierarchy: ${this.stateMachine.getStateHierarchy()}`,
       );
       if (this.websocket === undefined) {
-        console.error(
+        this.logger.error(
           "Failed to send a message as the client is not connected",
         );
         reject(sendWhileDisconnectedError());
       } else if (!this.isConnectionReady()) {
-        console.error(
+        this.logger.error(
           "Failed to send a message as the client is not ready",
         );
         reject(sendWhileNotReadyError());
@@ -403,7 +406,7 @@ export class SocketModeClient extends EventEmitter {
         this.emit("outgoing_message", message);
 
         const flatMessage = JSON.stringify(message);
-        console.debug(`Sending a WebSocket message: ${flatMessage}`);
+        this.logger.log(`Sending a WebSocket message: ${flatMessage}`);
         this.websocket.send(flatMessage);
       }
     });
@@ -411,10 +414,10 @@ export class SocketModeClient extends EventEmitter {
 
   private async retrieveWSSURL(): Promise<AppsConnectionsOpenResponse> {
     try {
-      console.debug("Going to retrieve a new WSS URL ...");
+      this.logger.log("Going to retrieve a new WSS URL ...");
       return await this.webClient.apiCall("apps.connections.open", {});
     } catch (error) {
-      console.error(
+      this.logger.error(
         `Failed to retrieve a new WSS URL for reconnection (error: ${error})`,
       );
       throw error;
@@ -426,8 +429,9 @@ export class SocketModeClient extends EventEmitter {
   }
 
   private reconnectingCondition(context: Context<string, string>): boolean {
+    // deno-lint-ignore no-explicit-any
     const error = context.error as any;
-    console.warn(
+    this.logger.error(
       `Failed to start a Socket Mode connection (error: ${error.message})`,
     );
 
@@ -453,7 +457,6 @@ export class SocketModeClient extends EventEmitter {
     _state: string,
     context: Context<string, string>,
   ) {
-    this.numOfConsecutiveReconnectionFailures = 0; // Reset the failure count
     this.authenticated = true;
     this.setupWebSocket(context.result.url);
     setImmediate(() => {
@@ -465,7 +468,7 @@ export class SocketModeClient extends EventEmitter {
     _state: string,
     context: Context<string, string>,
   ) {
-    console.error(
+    this.logger.error(
       `The internal logic unexpectedly failed (error: ${context.error})`,
     );
     this.terminateAllConnections();
@@ -482,13 +485,13 @@ export class SocketModeClient extends EventEmitter {
   /**
    * Clean up all the remaining connections.
    */
-  private terminateAllConnections() {
+  private async terminateAllConnections() {
     if (this.secondaryWebsocket !== undefined) {
-      this.terminateWebSocketSafely(this.secondaryWebsocket);
+      await this.terminateWebSocketSafely(this.secondaryWebsocket);
       this.secondaryWebsocket = undefined;
     }
     if (this.websocket !== undefined) {
-      this.terminateWebSocketSafely(this.websocket);
+      await this.terminateWebSocketSafely(this.websocket);
       this.websocket = undefined;
     }
   }
@@ -518,7 +521,7 @@ export class SocketModeClient extends EventEmitter {
     };
 
     websocket.onerror = (event: globalThis.Event | ErrorEvent) => {
-      console.error(`A WebSocket error occurred: ${event}`);
+      this.logger.error(`A WebSocket error occurred: ${event}`);
       if (event instanceof ErrorEvent) {
         this.emit("error", websocketErrorWithOriginal(event));
       }
@@ -529,21 +532,21 @@ export class SocketModeClient extends EventEmitter {
   /**
    * Switch the active connection to the secondary if exists.
    */
-  private switchWebSocketConnection(): void {
+  private async switchWebSocketConnection(): Promise<void> {
     if (this.secondaryWebsocket !== undefined && this.websocket !== undefined) {
-      console.debug("Switching to the secondary connection ...");
+      this.logger.log("Switching to the secondary connection ...");
       // Currently have two WebSocket objects, so tear down the older one
       const oldWebsocket = this.websocket;
       // Switch to the new one here
       this.websocket = this.secondaryWebsocket;
       this.secondaryWebsocket = undefined;
-      console.debug("Switched to the secondary connection");
+      this.logger.log("Switched to the secondary connection");
       // Swithcing the connection is done
       this.isSwitchingConnection = false;
 
       // Clean up the old one
-      this.terminateWebSocketSafely(oldWebsocket);
-      console.debug("Terminated the old connection");
+      await this.terminateWebSocketSafely(oldWebsocket);
+      this.logger.log("Terminated the old connection");
     }
   }
 
@@ -556,7 +559,7 @@ export class SocketModeClient extends EventEmitter {
       try {
         websocket.close();
       } catch (e) {
-        console.error(`Failed to terminate a connection (error: ${e})`);
+        this.logger.error(`Failed to terminate a connection (error: ${e})`);
       }
     }
   }
@@ -578,13 +581,14 @@ export class SocketModeClient extends EventEmitter {
   protected onWebSocketMessage(
     { data }: { data: string },
   ): void {
-    console.debug(`Received a message on the WebSocket: ${data}`);
+    this.logger.log(`Received a message on the WebSocket: ${data}`);
 
     // Parse message into slack event
     let event: {
       type: string;
       reason: string;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+      // deno-lint-ignore no-explicit-any
       payload: { [key: string]: any };
       envelope_id: string;
       retry_attempt?: number; // type: events_api
@@ -594,10 +598,10 @@ export class SocketModeClient extends EventEmitter {
 
     try {
       event = JSON.parse(data);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // deno-lint-ignore no-explicit-any
     } catch (parseError: any) {
       // Prevent application from crashing on a bad message, but log an error to bring attention
-      console.error(
+      this.logger.error(
         `Unable to parse an incoming WebSocket message: ${parseError.message}`,
       );
       return;
@@ -611,7 +615,7 @@ export class SocketModeClient extends EventEmitter {
 
     // Open the second WebSocket connection in preparation for the existing WebSocket disconnecting
     if (event.type === "disconnect" && event.reason === "warning") {
-      console.debug(
+      this.logger.log(
         'Received "disconnect" (warning) message - creating the second connection',
       );
       this.stateMachine.handle(Event.ServerDisconnectWarning);
@@ -620,7 +624,7 @@ export class SocketModeClient extends EventEmitter {
 
     // Close the primary WebSocket in favor of secondary WebSocket, assign secondary to primary
     if (event.type === "disconnect" && event.reason === "refresh_requested") {
-      console.debug(
+      this.logger.log(
         'Received "disconnect" (refresh requested) message - closing the old WebSocket connection',
       );
       this.stateMachine.handle(Event.ServerDisconnectOldSocket);
@@ -629,7 +633,7 @@ export class SocketModeClient extends EventEmitter {
 
     // Define Ack
     const ack = async (response: Record<string, unknown>): Promise<void> => {
-      console.debug(
+      this.logger.log(
         `Calling ack() - type: ${event.type}, envelope_id: ${event.envelope_id}, data: ${response}`,
       );
       await this.send(event.envelope_id, response);

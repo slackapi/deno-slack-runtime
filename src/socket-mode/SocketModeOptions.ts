@@ -1,7 +1,8 @@
+import { Protocol } from "../deps.ts";
+
 export interface SocketModeOptions {
   appToken?: string; // app level token
+  logger?: Protocol;
   autoReconnectEnabled?: boolean;
-  clientPingTimeout?: number;
   serverPingTimeout?: number;
-  pingPongLoggingEnabled?: boolean;
 }

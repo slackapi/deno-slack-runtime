@@ -86,7 +86,7 @@ export function websocketErrorWithOriginal(
  * A factory to create SMPlatformError objects.
  */
 export function platformErrorFromEvent(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // deno-lint-ignore no-explicit-any
   event: any & { error: { msg: string } },
 ): SMPlatformError {
   const error = errorWithCode(
