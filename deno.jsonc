@@ -16,6 +16,10 @@
   "lint": {
     "files": {
       "include": ["src"]
+    },
+    "rules": {
+      // [TODO]: Remove exclusion after we remove Deno.run
+      "exclude": ["no-deprecated-deno-api"]
     }
   },
   "test": {
