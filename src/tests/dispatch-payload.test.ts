@@ -117,10 +117,17 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
   const fixturesDir = `${__dirname}/fixtures`;
   Deno.chdir(fixturesDir);
   const functionsDir = `${fixturesDir}/functions`;
+  mockFetch.install(); // mock out calls to fetch
 
   await t.step(
     "return from provided file",
     async () => {
+      mockFetch.mock(
+        "POST@/api/functions.completeSuccess",
+        (_: Request) => {
+          return new Response('{"ok":true}');
+        },
+      );
       const payload = generatePayload(`${functionsDir}/wacky`);
       const fnModule = await DispatchPayload(
         payload,
@@ -152,9 +159,12 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
     },
   );
   Deno.chdir(origDir);
+  mockFetch.uninstall();
 });
 
 Deno.test("DispatchPayload with unhandled events", async (t) => {
+  mockFetch.install();
+
   await t.step("calls unhandledEvent with no default handler", async () => {
     const payload = generatePayload("my_func");
 
@@ -171,7 +181,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
         body: payload.body,
         env: payload.context.variables,
         team_id: payload.context.team_id,
-        enterprise_id: "",
+        enterprise_id: payload.body.enterprise_id,
         inputs: payload.body.event.inputs,
         token: payload.body.event.bot_access_token,
       }],
@@ -181,6 +191,12 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
   await t.step(
     "does not call unhandledEvent with default handler",
     async () => {
+      mockFetch.mock(
+        "POST@/api/functions.completeSuccess",
+        (_: Request) => {
+          return new Response('{"ok":true}');
+        },
+      );
       const payload = generatePayload("my_func");
 
       const fnModule = {
@@ -196,6 +212,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
       mock.assertSpyCalls(unhandledEventSpy, 0);
       mock.assertSpyCall(defaultSpy, 0, {
         args: [{
+          body: payload.body,
           event: payload.body.event,
           env: payload.context.variables,
           team_id: payload.context.team_id,
@@ -484,6 +501,8 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
       );
     },
   );
+
+  mockFetch.uninstall();
 });
 
 Deno.test("DispatchPayload custom error handling", async (t) => {

@@ -74,7 +74,10 @@ export const DispatchPayload = async (
         `Received an unsupported event of type: "${eventType}" for the ${functionCallbackId} function.`,
       );
     } else {
-      resp = EVENT_TO_HANDLER_MAP[eventType](baseHandlerArgs, functionModule);
+      resp = await EVENT_TO_HANDLER_MAP[eventType](
+        baseHandlerArgs,
+        functionModule,
+      );
     }
   } catch (handlerError) {
     if (isUnhandledEventError(handlerError)) {
@@ -128,7 +131,8 @@ export function extractBaseHandlerArgsFromPayload(
   const { body, context } = payload;
   const env = context.variables || {};
   const team_id = context.team_id || "";
-  const enterprise_id = body.enterprise_id || "";
+  const enterprise_id = body.enterprise_id ||
+    (body as BaseEventInvocationBody).enterprise?.id || "";
   const token = body.event?.bot_access_token || context.bot_access_token || "";
   const inputs = body.event?.inputs || {};
   return {
