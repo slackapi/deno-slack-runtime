@@ -122,7 +122,7 @@ function getFunctionCallbackID(
   }
 }
 
-function extractBaseHandlerArgsFromPayload(
+export function extractBaseHandlerArgsFromPayload(
   payload: InvocationPayload<ValidInvocationPayloadBody>,
 ): BaseHandlerArgs {
   const { body, context } = payload;

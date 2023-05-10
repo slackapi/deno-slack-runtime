@@ -1,6 +1,7 @@
 import { assertEquals, assertStringIncludes } from "../dev_deps.ts";
 import { mockFetch } from "../dev_deps.ts";
 import { RunFunction } from "../run-function.ts";
+import { extractBaseHandlerArgsFromPayload } from "../dispatch-payload.ts";
 import { FAKE_ID, generatePayload } from "./test_utils.ts";
 
 Deno.test("RunFunction function", async (t) => {
@@ -28,8 +29,8 @@ Deno.test("RunFunction function", async (t) => {
         },
       );
 
-      const payload = generatePayload("someid");
-      await RunFunction(payload, {
+      const args = extractBaseHandlerArgsFromPayload(generatePayload("someid"));
+      await RunFunction(args, {
         default: async () => {
           return await { error: "zomg!" };
         },
@@ -40,7 +41,7 @@ Deno.test("RunFunction function", async (t) => {
   await t.step(
     "should call completeSuccess API if function successfully completes",
     async () => {
-      const payload = generatePayload("someid");
+      const args = extractBaseHandlerArgsFromPayload(generatePayload("someid"));
       const outputs = { super: "dope" };
 
       mockFetch.mock(
@@ -63,7 +64,7 @@ Deno.test("RunFunction function", async (t) => {
         },
       );
 
-      await RunFunction(payload, {
+      await RunFunction(args, {
         default: async () => {
           return await { outputs };
         },

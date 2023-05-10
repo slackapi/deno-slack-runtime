@@ -1,5 +1,6 @@
 import { assertEquals, assertExists, assertRejects } from "../dev_deps.ts";
 import { RunViewSubmission } from "../run-view-submission.ts";
+import { extractBaseHandlerArgsFromPayload } from "../dispatch-payload.ts";
 import { generateViewSubmissionPayload } from "./test_utils.ts";
 import { UnhandledEventError } from "../run-unhandled-event.ts";
 import { FunctionModule } from "../types.ts";
@@ -10,7 +11,9 @@ Deno.test("RunViewSubmission function", async (t) => {
   });
 
   await t.step("should run handler", async () => {
-    const payload = generateViewSubmissionPayload();
+    const args = extractBaseHandlerArgsFromPayload(
+      generateViewSubmissionPayload(),
+    );
 
     const viewSubmissionResp = {
       burp: "adurp",
@@ -22,13 +25,15 @@ Deno.test("RunViewSubmission function", async (t) => {
         return viewSubmissionResp;
       },
     };
-    const resp = await RunViewSubmission(payload, fnModule);
+    const resp = await RunViewSubmission(args, fnModule);
 
     assertEquals(resp, viewSubmissionResp);
   });
 
   await t.step("should run nested handler", async () => {
-    const payload = generateViewSubmissionPayload();
+    const args = extractBaseHandlerArgsFromPayload(
+      generateViewSubmissionPayload(),
+    );
 
     const viewSubmissionResp = {
       burp: "adurp",
@@ -40,7 +45,7 @@ Deno.test("RunViewSubmission function", async (t) => {
     };
     fnModule.default.viewSubmission = () => ({ no: "way" });
 
-    const resp = await RunViewSubmission(payload, fnModule);
+    const resp = await RunViewSubmission(args, fnModule);
 
     assertEquals(resp, viewSubmissionResp);
   });
@@ -48,14 +53,16 @@ Deno.test("RunViewSubmission function", async (t) => {
   await t.step(
     "should return an empty resp if no handler defined",
     async () => {
-      const payload = generateViewSubmissionPayload();
+      const args = extractBaseHandlerArgsFromPayload(
+        generateViewSubmissionPayload(),
+      );
 
       const fnModule = {
         default: () => ({}),
       };
 
       await assertRejects(
-        () => RunViewSubmission(payload, fnModule),
+        () => RunViewSubmission(args, fnModule),
         UnhandledEventError,
         "view_submission",
       );

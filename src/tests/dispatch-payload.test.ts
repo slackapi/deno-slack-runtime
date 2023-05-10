@@ -4,6 +4,7 @@ import {
   assertMatch,
   assertRejects,
   mock,
+  mockFetch,
   MockProtocol,
   Spy,
 } from "../dev_deps.ts";
@@ -88,7 +89,7 @@ Deno.test("DispatchPayload function", async (t) => {
     },
   );
   await t.step(
-    "should warn if no function callback_id present in payload and no type present",
+    "should warn if no function callback_id present in payload and no type present and return an empty response to ack the event",
     async () => {
       const protocol = MockProtocol();
 
