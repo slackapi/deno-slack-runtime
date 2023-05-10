@@ -12,16 +12,13 @@ import {
 } from "./run-unhandled-event.ts";
 import {
   BaseEventInvocationBody,
-  BlockActionInvocationBody,
-  BlockSuggestionInvocationBody,
+  BaseHandlerArgs,
   EventTypes,
   FunctionInvocationBody,
   FunctionModule,
   InvocationPayload,
   ValidEventType,
   ValidInvocationPayloadBody,
-  ViewClosedInvocationBody,
-  ViewSubmissionInvocationBody,
 } from "./types.ts";
 import { Protocol } from "./deps.ts";
 
@@ -30,13 +27,24 @@ type GetFunctionFileCallback = {
   (functionCallbackId: string): string | FunctionModule;
 };
 
+const EVENT_TO_HANDLER_MAP = {
+  [EventTypes.FUNCTION_EXECUTED]: RunFunction,
+  [EventTypes.BLOCK_ACTIONS]: RunBlockAction,
+  [EventTypes.BLOCK_SUGGESTION]: RunBlockSuggestion,
+  [EventTypes.VIEW_CLOSED]: RunViewClosed,
+  [EventTypes.VIEW_SUBMISSION]: RunViewSubmission,
+};
+
 export const DispatchPayload = async (
   // deno-lint-ignore no-explicit-any
   payload: InvocationPayload<any>,
   hookCLI: Protocol,
   getFunctionFile: GetFunctionFileCallback,
 ) => {
-  const eventType = payload?.body?.event?.type || payload?.body?.type || "";
+  // TODO: should we check that this is a ValidEventType at runtime?
+  const eventType =
+    (payload?.body?.event?.type || payload?.body?.type || "") as ValidEventType;
+  const baseHandlerArgs = extractBaseHandlerArgsFromPayload(payload);
 
   const functionCallbackId = getFunctionCallbackID(eventType, payload);
 
@@ -61,47 +69,18 @@ export const DispatchPayload = async (
   let resp: any = {};
 
   try {
-    switch (eventType) {
-      case EventTypes.FUNCTION_EXECUTED:
-        resp = await RunFunction(
-          payload as InvocationPayload<FunctionInvocationBody>,
-          functionModule,
-        );
-        break;
-      case EventTypes.BLOCK_ACTIONS:
-        resp = await RunBlockAction(
-          payload as InvocationPayload<BlockActionInvocationBody>,
-          functionModule,
-        );
-        break;
-      case EventTypes.BLOCK_SUGGESTION:
-        resp = await RunBlockSuggestion(
-          payload as InvocationPayload<BlockSuggestionInvocationBody>,
-          functionModule,
-        );
-        break;
-      case EventTypes.VIEW_SUBMISSION:
-        resp = await RunViewSubmission(
-          payload as InvocationPayload<ViewSubmissionInvocationBody>,
-          functionModule,
-        );
-        break;
-      case EventTypes.VIEW_CLOSED:
-        resp = await RunViewClosed(
-          payload as InvocationPayload<ViewClosedInvocationBody>,
-          functionModule,
-        );
-        break;
-      default:
-        throw new UnhandledEventError(
-          `Received an unsupported event of type: "${eventType}" for the ${functionCallbackId} function.`,
-        );
+    if (!EVENT_TO_HANDLER_MAP[eventType]) {
+      throw new UnhandledEventError(
+        `Received an unsupported event of type: "${eventType}" for the ${functionCallbackId} function.`,
+      );
+    } else {
+      resp = EVENT_TO_HANDLER_MAP[eventType](baseHandlerArgs, functionModule);
     }
   } catch (handlerError) {
     if (isUnhandledEventError(handlerError)) {
       // Attempt to run the unhandledEvent handler
       if (hasUnhandledEventHandler(functionModule)) {
-        resp = await RunUnhandledEvent(payload, functionModule);
+        resp = await RunUnhandledEvent(baseHandlerArgs, functionModule);
       } else {
         hookCLI.warn(handlerError.message);
       }
@@ -141,4 +120,23 @@ function getFunctionCallbackID(
       return (payload as InvocationPayload<BaseEventInvocationBody>)?.body
         ?.function_data?.function?.callback_id ?? "";
   }
+}
+
+function extractBaseHandlerArgsFromPayload(
+  payload: InvocationPayload<ValidInvocationPayloadBody>,
+): BaseHandlerArgs {
+  const { body, context } = payload;
+  const env = context.variables || {};
+  const team_id = context.team_id || "";
+  const enterprise_id = body.enterprise_id || "";
+  const token = body.event?.bot_access_token || context.bot_access_token || "";
+  const inputs = body.event?.inputs || {};
+  return {
+    body,
+    env,
+    enterprise_id,
+    inputs,
+    token,
+    team_id,
+  };
 }

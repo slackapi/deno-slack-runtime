@@ -1,23 +1,12 @@
-import {
-  BaseEventInvocationBody,
-  FunctionModule,
-  InvocationPayload,
-} from "./types.ts";
+import { BaseHandlerArgs, FunctionModule } from "./types.ts";
 
 export const UNHANDLED_EVENT_ERROR = "UnhandledEventError";
 
 export const RunUnhandledEvent = async (
-  payload: InvocationPayload<BaseEventInvocationBody>,
+  baseHandlerArgs: BaseHandlerArgs,
   functionModule: FunctionModule,
   // deno-lint-ignore no-explicit-any
 ): Promise<any> => {
-  const { body, context } = payload;
-  const env = context.variables || {};
-  const team_id = context.team_id || "";
-  const enterprise_id = body.enterprise?.id || "";
-  const token = body.bot_access_token || context.bot_access_token || "";
-  const inputs = body.function_data?.inputs || {};
-
   const handler = functionModule.unhandledEvent ||
     functionModule.default?.unhandledEvent;
   if (!handler) {
@@ -25,14 +14,7 @@ export const RunUnhandledEvent = async (
   }
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process
   // deno-lint-ignore no-explicit-any
-  const response: any = await handler({
-    inputs,
-    env,
-    token,
-    body,
-    team_id,
-    enterprise_id,
-  });
+  const response: any = await handler(baseHandlerArgs);
 
   return response || {};
 };

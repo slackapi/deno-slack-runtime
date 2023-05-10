@@ -1,23 +1,13 @@
 import { BaseSlackAPIClient } from "./deps.ts";
-import {
-  EventTypes,
-  FunctionInvocationBody,
-  FunctionModule,
-  InvocationPayload,
-} from "./types.ts";
+import { BaseHandlerArgs, EventTypes, FunctionModule } from "./types.ts";
 import { UnhandledEventError } from "./run-unhandled-event.ts";
 
 export const RunFunction = async (
-  payload: InvocationPayload<FunctionInvocationBody>,
+  baseHandlerArgs: BaseHandlerArgs,
   functionModule: FunctionModule,
 ): Promise<void> => {
-  const { body, context } = payload;
-  const env = context.variables || {};
-  const team_id = context.team_id || "";
-  const enterprise_id = body.enterprise_id || "";
-  const token = body.event?.bot_access_token || context.bot_access_token || "";
-  const functionExecutionId = body.event?.function_execution_id;
-  const inputs = body.event?.inputs || {};
+  // TODO: should we throw if this cannot be found?
+  const functionExecutionId = baseHandlerArgs.body.event?.function_execution_id;
 
   if (!functionModule.default) {
     throw new UnhandledEventError(
@@ -25,19 +15,15 @@ export const RunFunction = async (
     );
   }
 
-  const client = new BaseSlackAPIClient(token, {
-    slackApiUrl: env["SLACK_API_URL"],
+  const client = new BaseSlackAPIClient(baseHandlerArgs.token, {
+    slackApiUrl: baseHandlerArgs.env["SLACK_API_URL"],
   });
 
   // We don't catch any errors the handlers may throw, we let them throw, and stop the process
   const { completed = true, outputs = {}, error } = await functionModule
     .default({
-      inputs,
-      env,
-      token,
-      team_id,
-      enterprise_id,
-      event: body.event,
+      event: baseHandlerArgs.body.event,
+      ...baseHandlerArgs,
     });
 
   // App has indicated there's an unrecoverable error with this function invocation

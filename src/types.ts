@@ -18,6 +18,7 @@ export type InvocationPayload<Body extends ValidInvocationPayloadBody> = {
 
 export type ValidInvocationPayloadBody =
   | BlockActionInvocationBody
+  | BlockSuggestionInvocationBody
   | ViewSubmissionInvocationBody
   | ViewClosedInvocationBody
   | FunctionInvocationBody
@@ -26,7 +27,7 @@ export type ValidInvocationPayloadBody =
 // Invocation Bodies
 export type FunctionInvocationBody = {
   event: {
-    type: "function_executed";
+    type: typeof EventTypes.FUNCTION_EXECUTED;
     function: {
       callback_id: string;
     };
@@ -81,12 +82,16 @@ export type FunctionHandlerReturnArgs = {
   error?: string;
 };
 
-export type FunctionHandlerArgs = {
+export type BaseHandlerArgs = {
+  body: ValidInvocationPayloadBody;
   env: EnvironmentVariables;
+  enterprise_id: string;
   inputs: FunctionInputValues;
   token: string;
   team_id: string;
-  enterprise_id: string;
+};
+
+export type FunctionHandlerArgs = BaseHandlerArgs & {
   event: FunctionInvocationBody["event"];
 };
 
@@ -128,13 +133,8 @@ export const EventTypes = {
 export type ValidEventType = typeof EventTypes[keyof typeof EventTypes];
 
 // --- Unhandled Event Types --- //
-type UnhandledEventHandlerArgs = {
+type UnhandledEventHandlerArgs = BaseHandlerArgs & {
   body: BaseEventInvocationBody;
-  token: string;
-  team_id: string;
-  enterprise_id: string;
-  inputs: FunctionInputValues;
-  env: EnvironmentVariables;
 };
 
 type UnhandledEventHandler = {
@@ -146,14 +146,9 @@ type UnhandledEventHandler = {
 // deno-lint-ignore no-explicit-any
 type BlockAction = any;
 
-export type BlockActionsHandlerArgs = {
+export type BlockActionsHandlerArgs = BaseHandlerArgs & {
   action: BlockAction;
   body: BlockActionInvocationBody;
-  token: string;
-  team_id: string;
-  enterprise_id: string;
-  inputs: FunctionInputValues;
-  env: EnvironmentVariables;
 };
 
 export type BlockActionsHandler = {
@@ -162,13 +157,8 @@ export type BlockActionsHandler = {
 };
 
 // --- Block Suggestion Types -- //
-export type BlockSuggestionHandlerArgs = {
+export type BlockSuggestionHandlerArgs = BaseHandlerArgs & {
   body: BlockSuggestionInvocationBody;
-  token: string;
-  team_id: string;
-  enterprise_id: string;
-  inputs: FunctionInputValues;
-  env: EnvironmentVariables;
 };
 
 export type BlockSuggestionHandler = {
@@ -180,14 +170,9 @@ export type BlockSuggestionHandler = {
 // deno-lint-ignore no-explicit-any
 type View = any;
 
-type ViewClosedHandlerArgs = {
-  view: View;
+type ViewClosedHandlerArgs = BaseHandlerArgs & {
   body: ViewClosedInvocationBody;
-  token: string;
-  team_id: string;
-  enterprise_id: string;
-  inputs: FunctionInputValues;
-  env: EnvironmentVariables;
+  view: View;
 };
 
 type ViewClosedHandler = {
@@ -196,14 +181,9 @@ type ViewClosedHandler = {
 };
 
 // --- View Submission Types --- //
-type ViewSubmissionHandlerArgs = {
-  view: View;
+type ViewSubmissionHandlerArgs = BaseHandlerArgs & {
   body: ViewSubmissionInvocationBody;
-  token: string;
-  team_id: string;
-  enterprise_id: string;
-  inputs: FunctionInputValues;
-  env: EnvironmentVariables;
+  view: View;
 };
 
 type ViewSubmissionHandler = {
