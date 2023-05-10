@@ -27,6 +27,7 @@ type GetFunctionFileCallback = {
   (functionCallbackId: string): string | FunctionModule;
 };
 
+// A helper structure that maps event names to the functions responsible for invoking userland code with the relevant event's payload
 const EVENT_TO_HANDLER_MAP = {
   [EventTypes.FUNCTION_EXECUTED]: RunFunction,
   [EventTypes.BLOCK_ACTIONS]: RunBlockAction,
