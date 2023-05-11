@@ -1,7 +1,7 @@
 import { assertEquals, assertExists, assertRejects } from "../dev_deps.ts";
 import { RunUnhandledEvent } from "../run-unhandled-event.ts";
 import { extractBaseHandlerArgsFromPayload } from "../dispatch-payload.ts";
-import { generateBaseInvocationBody } from "./test_utils.ts";
+import { generateBaseEventInvocationBody } from "./test_utils.ts";
 
 Deno.test("RunUnhandledEvent function", async (t) => {
   await t.step("should be defined", () => {
@@ -10,7 +10,7 @@ Deno.test("RunUnhandledEvent function", async (t) => {
 
   await t.step("should run handler", async () => {
     const args = extractBaseHandlerArgsFromPayload(
-      generateBaseInvocationBody("something"),
+      generateBaseEventInvocationBody("something"),
     );
 
     const fnModule = {
@@ -24,7 +24,7 @@ Deno.test("RunUnhandledEvent function", async (t) => {
 
   await t.step("should run nested handler", async () => {
     const args = extractBaseHandlerArgsFromPayload(
-      generateBaseInvocationBody("something"),
+      generateBaseEventInvocationBody("something"),
     );
 
     // deno-lint-ignore no-explicit-any
@@ -40,7 +40,7 @@ Deno.test("RunUnhandledEvent function", async (t) => {
 
   await t.step("should run top level handler over nested handler", async () => {
     const args = extractBaseHandlerArgsFromPayload(
-      generateBaseInvocationBody("something"),
+      generateBaseEventInvocationBody("something"),
     );
 
     // deno-lint-ignore no-explicit-any
@@ -59,7 +59,7 @@ Deno.test("RunUnhandledEvent function", async (t) => {
     "should throw an error if no handler defined",
     async () => {
       const args = extractBaseHandlerArgsFromPayload(
-        generateBaseInvocationBody("something"),
+        generateBaseEventInvocationBody("something"),
       );
 
       const fnModule = {

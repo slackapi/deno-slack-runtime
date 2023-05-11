@@ -33,20 +33,25 @@ export type FunctionInvocationBody = {
     };
     function_execution_id: string;
     inputs: FunctionInputValues;
-    bot_access_token?: string;
+    bot_access_token: string;
   };
-  enterprise_id: string;
+  /**
+   * Only exists when executed in an enterprise workspace.
+   */
+  enterprise_id?: string;
 };
 
 // All events other than the main function_executed one have at least these properties
 export type BaseEventInvocationBody = {
   bot_access_token?: string;
   function_data?: FunctionData;
+  /**
+   * Only exists when executed in an enterprise workspace. Otherwise at runtime is `null`.
+   */
+  enterprise?: { id: string };
   // deno-lint-ignore no-explicit-any
   [key: string]: any;
 };
-
-//TODO: add typing for the enterprise id that exists on these payloads
 
 export type BlockActionInvocationBody = BaseEventInvocationBody & {
   type: typeof EventTypes.BLOCK_ACTIONS;

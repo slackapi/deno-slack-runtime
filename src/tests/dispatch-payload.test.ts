@@ -10,10 +10,10 @@ import {
 } from "../dev_deps.ts";
 import { DispatchPayload } from "../dispatch-payload.ts";
 import {
-  generateBaseInvocationBody,
+  generateBaseEventInvocationBody,
   generateBlockActionsPayload,
   generateBlockSuggestionPayload,
-  generatePayload,
+  generateFunctionExecutedPayload,
   generateViewClosedPayload,
   generateViewSubmissionPayload,
 } from "./test_utils.ts";
@@ -128,7 +128,7 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
           return new Response('{"ok":true}');
         },
       );
-      const payload = generatePayload(`${functionsDir}/wacky`);
+      const payload = generateFunctionExecutedPayload(`${functionsDir}/wacky`);
       const fnModule = await DispatchPayload(
         payload,
         MockProtocol(),
@@ -142,7 +142,7 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
   await t.step(
     "file not found",
     async () => {
-      const payload = generatePayload(`${functionsDir}/funky`);
+      const payload = generateFunctionExecutedPayload(`${functionsDir}/funky`);
       await assertRejects(
         async () => {
           return await DispatchPayload(
@@ -166,7 +166,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
   mockFetch.install();
 
   await t.step("calls unhandledEvent with no default handler", async () => {
-    const payload = generatePayload("my_func");
+    const payload = generateFunctionExecutedPayload("my_func");
 
     const fnModule = {
       unhandledEvent: () => ({}),
@@ -181,7 +181,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
         body: payload.body,
         env: payload.context.variables,
         team_id: payload.context.team_id,
-        enterprise_id: payload.body.enterprise_id,
+        enterprise_id: "",
         inputs: payload.body.event.inputs,
         token: payload.body.event.bot_access_token,
       }],
@@ -197,7 +197,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
           return new Response('{"ok":true}');
         },
       );
-      const payload = generatePayload("my_func");
+      const payload = generateFunctionExecutedPayload("my_func");
 
       const fnModule = {
         default: () => ({}),
@@ -216,7 +216,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
           event: payload.body.event,
           env: payload.context.variables,
           team_id: payload.context.team_id,
-          enterprise_id: payload.body.enterprise_id,
+          enterprise_id: "",
           inputs: payload.body.event.inputs,
           token: payload.body.event.bot_access_token,
         }],
@@ -241,7 +241,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
         body: payload.body,
         env: payload.context.variables,
         team_id: payload.context.team_id,
-        enterprise_id: payload.body.enterprise.id,
+        enterprise_id: "",
         inputs: payload.body.function_data?.inputs,
         token: payload.body.bot_access_token,
       }],
@@ -271,7 +271,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
           action: payload.body.actions[0],
           env: payload.context.variables,
           team_id: payload.context.team_id,
-          enterprise_id: payload.body.enterprise.id,
+          enterprise_id: "",
           inputs: payload.body.function_data?.inputs,
           token: payload.body.bot_access_token,
         }],
@@ -353,7 +353,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
         body: payload.body,
         env: payload.context.variables,
         team_id: payload.context.team_id,
-        enterprise_id: payload.body.enterprise.id,
+        enterprise_id: "",
         inputs: payload.body.function_data?.inputs,
         token: payload.body.bot_access_token,
       }],
@@ -383,7 +383,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
           view: payload.body.view,
           env: payload.context.variables,
           team_id: payload.context.team_id,
-          enterprise_id: payload.body.enterprise.id,
+          enterprise_id: "",
           inputs: payload.body.function_data?.inputs,
           token: payload.body.bot_access_token,
         }],
@@ -410,7 +410,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
           body: payload.body,
           env: payload.context.variables,
           team_id: payload.context.team_id,
-          enterprise_id: payload.body.enterprise.id,
+          enterprise_id: "",
           inputs: payload.body.function_data?.inputs,
           token: payload.body.bot_access_token,
         }],
@@ -441,7 +441,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
           view: payload.body.view,
           env: payload.context.variables,
           team_id: payload.context.team_id,
-          enterprise_id: payload.body.enterprise.id,
+          enterprise_id: "",
           inputs: payload.body.function_data?.inputs,
           token: payload.body.bot_access_token,
         }],
@@ -470,7 +470,10 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
   await t.step(
     "console.warn() for unrecognized event type",
     async () => {
-      const payload = generateBaseInvocationBody("unknown_type", "some_id");
+      const payload = generateBaseEventInvocationBody(
+        "unknown_type",
+        "some_id",
+      );
 
       const fnModule = {
         default: () => ({}),
@@ -488,7 +491,7 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
   await t.step(
     "handler errors are thrown",
     async () => {
-      const payload = generatePayload("test_id");
+      const payload = generateFunctionExecutedPayload("test_id");
 
       const fnModule = {
         default: () => {
@@ -509,7 +512,7 @@ Deno.test("DispatchPayload custom error handling", async (t) => {
   await t.step(
     "passes through generic error",
     async () => {
-      const payload = generatePayload("test_id");
+      const payload = generateFunctionExecutedPayload("test_id");
 
       const fnModule = {
         default: () => {
@@ -528,7 +531,7 @@ Deno.test("DispatchPayload custom error handling", async (t) => {
   await t.step(
     "customizes error if matches allow net",
     async () => {
-      const payload = generatePayload("test_id");
+      const payload = generateFunctionExecutedPayload("test_id");
 
       const fnModule = {
         default: () => {

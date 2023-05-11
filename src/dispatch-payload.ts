@@ -134,8 +134,11 @@ export function extractBaseHandlerArgsFromPayload(
   const team_id = context.team_id || "";
   const enterprise_id = body.enterprise_id ||
     (body as BaseEventInvocationBody).enterprise?.id || "";
-  const token = body.event?.bot_access_token || context.bot_access_token || "";
-  const inputs = body.event?.inputs || {};
+  const token = (body as FunctionInvocationBody).event?.bot_access_token ||
+    (body as BaseEventInvocationBody).bot_access_token ||
+    context.bot_access_token || "";
+  const inputs = (body as FunctionInvocationBody).event?.inputs ||
+    (body as BaseEventInvocationBody).function_data?.inputs || {};
   return {
     body,
     env,
