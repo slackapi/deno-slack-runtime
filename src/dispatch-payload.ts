@@ -79,7 +79,6 @@ export const DispatchPayload = async (
       baseHandlerArgs,
       functionModule,
     );
-    }
   } catch (handlerError) {
     if (isUnhandledEventError(handlerError)) {
       // Attempt to run the unhandledEvent handler
