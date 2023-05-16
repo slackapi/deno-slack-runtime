@@ -8,7 +8,11 @@ import {
   MockProtocol,
   Spy,
 } from "../dev_deps.ts";
-import { DispatchPayload } from "../dispatch-payload.ts";
+import {
+  DispatchPayload,
+  extractBaseHandlerArgsFromPayload,
+} from "../dispatch-payload.ts";
+import { BaseEventInvocationBody, InvocationPayload } from "../types.ts";
 import {
   generateBaseEventInvocationBody,
   generateBlockActionsPayload,
@@ -548,6 +552,166 @@ Deno.test("DispatchPayload custom error handling", async (t) => {
         Error,
         "add the domain to your manifest's `outgoingDomains`",
       );
+    },
+  );
+});
+
+Deno.test("extractBaseHandlerArgsFromPayload method", async (t) => {
+  await t.step(
+    "should extract `env`, `team_id` and `token` properties from payload context object",
+    () => {
+      const payload = {
+        body: {},
+        context: {
+          bot_access_token: "xoxo-1234",
+          team_id: "T1234",
+          variables: { hey: "yo" },
+        },
+      };
+      const args = extractBaseHandlerArgsFromPayload(payload);
+      assertEquals(args.env, payload.context.variables);
+      assertEquals(args.team_id, payload.context.team_id);
+      assertEquals(args.token, payload.context.bot_access_token);
+    },
+  );
+
+  await t.step(
+    "should set `env`, `team_id` and `token` properties to default values if missing from payload context object",
+    () => {
+      const payload = {
+        body: {},
+        context: {},
+      };
+      // @ts-ignore: ignoring type error for won't-happen-in-practice payload shape
+      const args = extractBaseHandlerArgsFromPayload(payload);
+      assertEquals(args.env, {});
+      assertEquals(args.team_id, "");
+      assertEquals(args.token, "");
+    },
+  );
+
+  await t.step(
+    "should set `enterprise_id` if exists on payload body object",
+    () => {
+      const payload = {
+        body: {
+          enterprise_id: "E123",
+        },
+        context: {
+          bot_access_token: "xoxo-1234",
+          team_id: "T1234",
+          variables: { hey: "yo" },
+        },
+      };
+      const args = extractBaseHandlerArgsFromPayload(payload);
+      assertEquals(args.enterprise_id, payload.body.enterprise_id);
+    },
+  );
+
+  await t.step(
+    "should set `enterprise_id` if exists on payload body.enterprise object",
+    () => {
+      const payload = {
+        body: {
+          enterprise: {
+            id: "E123",
+          },
+        },
+        context: {
+          bot_access_token: "xoxo-1234",
+          team_id: "T1234",
+          variables: { hey: "yo" },
+        },
+      };
+      const args = extractBaseHandlerArgsFromPayload(payload);
+      assertEquals(args.enterprise_id, payload.body.enterprise.id);
+    },
+  );
+
+  await t.step(
+    "should set `enterprise_id` to default value if not present on payload",
+    () => {
+      const payload = {
+        body: {},
+        context: {
+          bot_access_token: "xoxo-1234",
+          team_id: "T1234",
+          variables: { hey: "yo" },
+        },
+      };
+      const args = extractBaseHandlerArgsFromPayload(payload);
+      assertEquals(args.enterprise_id, "");
+    },
+  );
+
+  await t.step("should set `token` if exists on payload body object", () => {
+    const payload = {
+      body: { bot_access_token: "xoxo-4321" },
+      context: {
+        bot_access_token: "xoxo-1234",
+        team_id: "T1234",
+        variables: { hey: "yo" },
+      },
+    };
+    const args = extractBaseHandlerArgsFromPayload(payload);
+    assertEquals(args.token, payload.body.bot_access_token);
+  });
+
+  await t.step(
+    "should set `token` if exists on payload body.event object",
+    () => {
+      const payload = {
+        body: {
+          event: {
+            bot_access_token: "xoxo-4321",
+          },
+        },
+        context: {
+          bot_access_token: "xoxo-1234",
+          team_id: "T1234",
+          variables: { hey: "yo" },
+        },
+      };
+      const args = extractBaseHandlerArgsFromPayload(payload);
+      assertEquals(args.token, payload.body.event.bot_access_token);
+    },
+  );
+
+  await t.step(
+    "should set `inputs` if exists on payload body.event object",
+    () => {
+      const payload = {
+        body: { event: { inputs: { hi: "ho" } } },
+        context: {
+          bot_access_token: "xoxo-1234",
+          team_id: "T1234",
+          variables: { hey: "yo" },
+        },
+      };
+      const args = extractBaseHandlerArgsFromPayload(payload);
+      assertEquals(args.inputs, payload.body.event.inputs);
+    },
+  );
+
+  await t.step(
+    "should set `inputs` if exists on payload body.function_data object",
+    () => {
+      const payload = {
+        body: {
+          function_data: {
+            execution_id: "eid1234",
+            function: { callback_id: "C1234" },
+            inputs: { hi: "ho" },
+          },
+        },
+        context: {
+          bot_access_token: "xoxo-1234",
+          team_id: "T1234",
+          variables: { hey: "yo" },
+        },
+      } as InvocationPayload<BaseEventInvocationBody>;
+      const args = extractBaseHandlerArgsFromPayload(payload);
+      assertEquals(args.inputs, payload.body.function_data?.inputs);
     },
   );
 });
