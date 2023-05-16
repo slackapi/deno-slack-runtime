@@ -74,11 +74,11 @@ export const DispatchPayload = async (
       throw new UnhandledEventError(
         `Received an unsupported event of type: "${eventType}" for the ${functionCallbackId} function.`,
       );
-    } else {
-      resp = await EVENT_TO_HANDLER_MAP[eventType](
-        baseHandlerArgs,
-        functionModule,
-      );
+    }
+    resp = await EVENT_TO_HANDLER_MAP[eventType](
+      baseHandlerArgs,
+      functionModule,
+    );
     }
   } catch (handlerError) {
     if (isUnhandledEventError(handlerError)) {
