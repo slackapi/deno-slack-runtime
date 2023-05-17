@@ -34,7 +34,7 @@ export const generateBaseEventInvocationBody = (
   callback_id?: string,
   enterprise_id?: string,
 ): InvocationPayload<BaseEventInvocationBody> => {
-  const payload = {
+  const payload: InvocationPayload<BaseEventInvocationBody> = {
     body: {
       type,
       function_data: {
@@ -45,7 +45,7 @@ export const generateBaseEventInvocationBody = (
       bot_access_token: FAKE_ID,
     },
     context: { team_id: FAKE_ID, bot_access_token: FAKE_ID, variables: {} },
-  } as InvocationPayload<BaseEventInvocationBody>;
+  };
   if (enterprise_id) {
     payload.body.enterprise = { id: enterprise_id };
   }
