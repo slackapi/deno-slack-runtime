@@ -129,15 +129,19 @@ export function extractBaseHandlerArgsFromPayload(
   payload: InvocationPayload<ValidInvocationPayloadBody>,
 ): BaseHandlerArgs {
   const { body, context } = payload;
+  const eventBody = body as BaseEventInvocationBody;
+  const fnBody = body as FunctionInvocationBody;
+
   const env = context.variables || {};
   const team_id = context.team_id || "";
   const enterprise_id = body.enterprise_id ||
-    (body as BaseEventInvocationBody).enterprise?.id || "";
-  const token = (body as FunctionInvocationBody).event?.bot_access_token ||
-    (body as BaseEventInvocationBody).bot_access_token ||
+    eventBody.enterprise?.id || "";
+  const token = fnBody.event?.bot_access_token ||
+    eventBody.bot_access_token ||
     context.bot_access_token || "";
-  const inputs = (body as FunctionInvocationBody).event?.inputs ||
-    (body as BaseEventInvocationBody).function_data?.inputs || {};
+  const inputs = fnBody.event?.inputs ||
+    eventBody.function_data?.inputs || {};
+
   return {
     body,
     env,
