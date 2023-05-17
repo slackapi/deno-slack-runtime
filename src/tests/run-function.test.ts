@@ -1,4 +1,8 @@
-import { assertEquals, assertStringIncludes } from "../dev_deps.ts";
+import {
+  assertEquals,
+  assertStringIncludes,
+  MockProtocol,
+} from "../dev_deps.ts";
 import { mockFetch } from "../dev_deps.ts";
 import { RunFunction } from "../run-function.ts";
 import { extractBaseHandlerArgsFromPayload } from "../dispatch-payload.ts";
@@ -36,7 +40,7 @@ Deno.test("RunFunction function", async (t) => {
         default: async () => {
           return await { error: "zomg!" };
         },
-      });
+      }, MockProtocol());
     },
   );
 
@@ -72,7 +76,7 @@ Deno.test("RunFunction function", async (t) => {
         default: async () => {
           return await { outputs };
         },
-      });
+      }, MockProtocol());
     },
   );
   mockFetch.uninstall();

@@ -79,6 +79,7 @@ export const DispatchPayload = async (
     resp = await EVENT_TO_HANDLER_MAP[eventType](
       baseHandlerArgs,
       functionModule,
+      hookCLI,
     );
   } catch (handlerError) {
     if (isUnhandledEventError(handlerError)) {
