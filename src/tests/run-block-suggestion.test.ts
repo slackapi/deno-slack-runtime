@@ -1,6 +1,7 @@
 import { assertEquals, assertExists, assertRejects } from "../dev_deps.ts";
 import { RunBlockSuggestion } from "../run-block-suggestion.ts";
 import { generateBlockSuggestionPayload } from "./test_utils.ts";
+import { extractBaseHandlerArgsFromPayload } from "../dispatch-payload.ts";
 import { UnhandledEventError } from "../run-unhandled-event.ts";
 import { FunctionModule } from "../types.ts";
 
@@ -29,7 +30,9 @@ Deno.test("RunBlockSuggestion function", async (t) => {
   });
 
   await t.step("should run handler", async () => {
-    const payload = generateBlockSuggestionPayload();
+    const args = extractBaseHandlerArgsFromPayload(
+      generateBlockSuggestionPayload(),
+    );
 
     const fnModule = {
       default: () => ({}),
@@ -37,13 +40,15 @@ Deno.test("RunBlockSuggestion function", async (t) => {
         return sampleOptionsResponse;
       },
     };
-    const resp = await RunBlockSuggestion(payload, fnModule);
+    const resp = await RunBlockSuggestion(args, fnModule);
 
     assertEquals(resp, sampleOptionsResponse);
   });
 
   await t.step("should run nested handler", async () => {
-    const payload = generateBlockSuggestionPayload();
+    const args = extractBaseHandlerArgsFromPayload(
+      generateBlockSuggestionPayload(),
+    );
 
     const fnModule: FunctionModule = {
       default: () => ({}),
@@ -51,13 +56,15 @@ Deno.test("RunBlockSuggestion function", async (t) => {
     fnModule.default.blockSuggestion = () => {
       return sampleOptionsResponse;
     };
-    const resp = await RunBlockSuggestion(payload, fnModule);
+    const resp = await RunBlockSuggestion(args, fnModule);
 
     assertEquals(resp, sampleOptionsResponse);
   });
 
   await t.step("should run top level handler over nested handler", async () => {
-    const payload = generateBlockSuggestionPayload();
+    const args = extractBaseHandlerArgsFromPayload(
+      generateBlockSuggestionPayload(),
+    );
 
     const fnModule: FunctionModule = {
       default: () => ({}),
@@ -67,7 +74,7 @@ Deno.test("RunBlockSuggestion function", async (t) => {
       no: "way",
     });
 
-    const resp = await RunBlockSuggestion(payload, fnModule);
+    const resp = await RunBlockSuggestion(args, fnModule);
 
     assertEquals(resp, sampleOptionsResponse);
   });
@@ -75,14 +82,16 @@ Deno.test("RunBlockSuggestion function", async (t) => {
   await t.step(
     "should throw an error if no handler defined",
     async () => {
-      const payload = generateBlockSuggestionPayload();
+      const args = extractBaseHandlerArgsFromPayload(
+        generateBlockSuggestionPayload(),
+      );
 
       const fnModule = {
         default: () => ({}),
       };
 
       await assertRejects(
-        () => RunBlockSuggestion(payload, fnModule),
+        () => RunBlockSuggestion(args, fnModule),
         UnhandledEventError,
         "block_suggestion",
       );
