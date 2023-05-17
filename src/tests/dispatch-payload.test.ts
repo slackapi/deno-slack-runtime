@@ -562,8 +562,7 @@ Deno.test("extractBaseHandlerArgsFromPayload method", async (t) => {
       const payload = {
         body: {},
         context: {},
-      };
-      // @ts-ignore: ignoring type error for won't-happen-in-practice payload shape
+      } as InvocationPayload<BaseEventInvocationBody>;
       const args = extractBaseHandlerArgsFromPayload(payload);
       assertEquals(args.env, {});
       assertEquals(args.team_id, "");
