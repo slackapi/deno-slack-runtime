@@ -45,7 +45,7 @@ export const DispatchPayload = async (
   // TODO: should we check that this is a ValidEventType at runtime?
   const eventType: ValidEventType = payload?.body?.event?.type ||
     payload?.body?.type || "";
-    (payload?.body?.event?.type || payload?.body?.type || "") as ValidEventType;
+  (payload?.body?.event?.type || payload?.body?.type || "") as ValidEventType;
   const baseHandlerArgs = extractBaseHandlerArgsFromPayload(payload);
 
   const functionCallbackId = getFunctionCallbackID(eventType, payload);
