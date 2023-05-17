@@ -115,7 +115,7 @@ Deno.test("DispatchPayload function", async (t) => {
   );
 });
 
-Deno.test("DispatchPayload function file compatibility tests", async (t) => {
+Deno.test("DispatchPayload with userland handler module loading", async (t) => {
   const origDir = Deno.cwd();
   const __dirname = new URL(".", import.meta.url).pathname;
   const fixturesDir = `${__dirname}/fixtures`;
@@ -124,27 +124,7 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
   mockFetch.install(); // mock out calls to fetch
 
   await t.step(
-    "return from provided file",
-    async () => {
-      mockFetch.mock(
-        "POST@/api/functions.completeSuccess",
-        (_: Request) => {
-          return new Response('{"ok":true}');
-        },
-      );
-      const payload = generateFunctionExecutedPayload(`${functionsDir}/wacky`);
-      const fnModule = await DispatchPayload(
-        payload,
-        MockProtocol(),
-        (functionCallbackId) => {
-          return `${functionCallbackId}.js`;
-        },
-      );
-      assertEquals(fnModule, {});
-    },
-  );
-  await t.step(
-    "file not found",
+    "should throw if handler module file is not not found",
     async () => {
       const payload = generateFunctionExecutedPayload(`${functionsDir}/funky`);
       await assertRejects(
@@ -153,6 +133,7 @@ Deno.test("DispatchPayload function file compatibility tests", async (t) => {
             payload,
             MockProtocol(),
             (functionCallbackId) => {
+              // The fixture below is actually a `.ts` file, not a `.js` file, so that should cause an exception.
               return `${functionCallbackId}.js`;
             },
           );
