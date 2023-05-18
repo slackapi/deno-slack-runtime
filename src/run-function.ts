@@ -12,7 +12,7 @@ export const RunFunction = async (
   // TODO: in the future, if we add more of this kind of logging, then perhaps worth considering moving to a structured logger with different log levels
   // this would reduce the amount of `if (debugMode) log(something)` conditional code
   // e.g. https://deno.land/std@0.151.0/log/README.md
-  const debugMode = baseHandlerArgs.env["DEBUG"] == "true";
+  const debugMode = baseHandlerArgs.env["SLACK_DEBUG"] == "true";
 
   if (!functionModule.default) {
     throw new UnhandledEventError(

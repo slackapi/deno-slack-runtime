@@ -83,6 +83,9 @@ Deno.test("RunFunction function", async (t) => {
   );
 
   await t.step("debug mode enabled", async (tt) => {
+    const evtPayload = generateFunctionExecutedPayload("someid");
+    evtPayload.context.variables = { SLACK_DEBUG: "true" };
+
     await tt.step(
       "should log both request and response payloads to completeError if function fails to complete",
       async () => {
@@ -92,8 +95,6 @@ Deno.test("RunFunction function", async (t) => {
             return new Response('{"ok":true}');
           },
         );
-        const evtPayload = generateFunctionExecutedPayload("someid");
-        evtPayload.context.variables = { DEBUG: "true" };
 
         const args = extractBaseHandlerArgsFromPayload(evtPayload);
         const mockProtocol = MockProtocol();
@@ -132,8 +133,6 @@ Deno.test("RunFunction function", async (t) => {
             return new Response('{"ok":true}');
           },
         );
-        const evtPayload = generateFunctionExecutedPayload("someid");
-        evtPayload.context.variables = { DEBUG: "true" };
 
         const args = extractBaseHandlerArgsFromPayload(evtPayload);
         const mockProtocol = MockProtocol();
