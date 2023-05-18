@@ -110,7 +110,10 @@ Deno.test("RunFunction function", async (t) => {
           0,
           "functions.completeError request payload:",
         );
-        assertEquals(logSpy.calls[0].args[1].error, functionOutput.error);
+        assertStringIncludes(
+          logSpy.calls[0].args[1],
+          `"error": "${functionOutput.error}"`,
+        );
         mock.assertSpyCallArg(
           logSpy,
           1,
@@ -147,7 +150,10 @@ Deno.test("RunFunction function", async (t) => {
           0,
           "functions.completeSuccess request payload:",
         );
-        assertEquals(logSpy.calls[0].args[1].outputs, functionOutput.outputs);
+        assertStringIncludes(
+          logSpy.calls[0].args[1],
+          `"super": "dope"`,
+        );
         mock.assertSpyCallArg(
           logSpy,
           1,

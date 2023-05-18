@@ -38,7 +38,10 @@ export const RunFunction = async (
       function_execution_id: functionExecutionId,
     };
     if (debugMode) {
-      hookCLI.log("functions.completeError request payload:", errorPayload);
+      hookCLI.log(
+        "functions.completeError request payload:",
+        JSON.stringify(errorPayload, null, 2),
+      );
     }
     const errorResp = await client.apiCall(
       "functions.completeError",
@@ -57,7 +60,10 @@ export const RunFunction = async (
       function_execution_id: functionExecutionId,
     };
     if (debugMode) {
-      hookCLI.log("functions.completeSuccess request payload:", successPayload);
+      hookCLI.log(
+        "functions.completeSuccess request payload:",
+        JSON.stringify(successPayload, null, 2),
+      );
     }
     const successResp = await client.apiCall(
       "functions.completeSuccess",
