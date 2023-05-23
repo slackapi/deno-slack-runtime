@@ -5,8 +5,8 @@ project is to provide modules for:
 
 1. Parsing function execution event payloads into JSON (`src/parse-payload.ts`)
 2. Dynamically loading the target function (`src/load-function-module.ts`)
-3. Marshaling event payloads to individual functions by callback ID and running
-   them (`src/run-function.ts`)
+3. Dispatching event payloads to individual functions by callback ID and running
+   them (`src/dispatch-payload.ts`)
 
 This library has two modes of operation:
 
@@ -22,7 +22,7 @@ This library has two modes of operation:
    property is used to determine which function to load and run at runtime.
 
 Regardless of which mode of operation used, each runtime definition for a
-function is specified in it's own file and must be the default export.
+function is specified in its own file and must be the default export.
 
 ## Usage
 
