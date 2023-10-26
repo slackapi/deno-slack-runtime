@@ -75,8 +75,9 @@ export const getCommandline = function (
   } else {
     allowedDomains.push("slack.com");
   }
-  // Add deno.land to allow uncached remote deps
+  // Add deno.land and esm.sh to allow uncached remote deps
   allowedDomains.push("deno.land");
+  allowedDomains.push("esm.sh");
 
   command.push("--allow-net=" + allowedDomains.join(","));
   command.push(findRelativeFile(mainModule, "local-run-function.ts"));

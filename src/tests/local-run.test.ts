@@ -43,7 +43,7 @@ Deno.test("getCommandline function", async (t) => {
       "--config=deno.jsonc",
       "--allow-read",
       "--allow-env",
-      "--allow-net=example.com,slack.com,deno.land",
+      "--allow-net=example.com,slack.com,deno.land,esm.sh",
       FAKE_DENO_LAND_EXPECTED_MODULE,
     ]);
   });
@@ -64,7 +64,7 @@ Deno.test("getCommandline function", async (t) => {
       "--allow-read",
       "--allow-env",
       "--unsafely-ignore-certificate-errors=dev1234.slack.com",
-      "--allow-net=example.com,dev1234.slack.com,deno.land",
+      "--allow-net=example.com,dev1234.slack.com,deno.land,esm.sh",
       FAKE_DENO_LAND_EXPECTED_MODULE,
     ]);
   });
@@ -84,7 +84,7 @@ Deno.test("getCommandline function", async (t) => {
       "--config=deno.jsonc",
       "--allow-read",
       "--allow-env",
-      "--allow-net=slack.com,deno.land",
+      "--allow-net=slack.com,deno.land,esm.sh",
       FAKE_DENO_LAND_EXPECTED_MODULE,
     ]);
   });
@@ -104,7 +104,7 @@ Deno.test("getCommandline function", async (t) => {
       "--config=deno.jsonc",
       "--allow-read",
       "--allow-env",
-      "--allow-net=slack.com,deno.land",
+      "--allow-net=slack.com,deno.land,esm.sh",
       FAKE_FILE_EXPECTED_MODULE,
     ]);
   });
@@ -124,7 +124,7 @@ Deno.test("getCommandline function", async (t) => {
       "--config=deno.jsonc",
       "--allow-read",
       "--allow-env",
-      "--allow-net=example.com,slack.com,deno.land",
+      "--allow-net=example.com,slack.com,deno.land,esm.sh",
       "file:///local-run-function.ts",
     ]);
   });
@@ -146,7 +146,7 @@ Deno.test("getCommandline function", async (t) => {
       "--config=deno.jsonc",
       "--allow-read",
       "--allow-env",
-      "--allow-net=example.com,slack.com,deno.land",
+      "--allow-net=example.com,slack.com,deno.land,esm.sh",
       "file:///local-run-function.ts",
       "--mycustomflag",
     ]);
