@@ -74,6 +74,7 @@ export const getCommandline = function (
     allowedDomains.push(devDomain);
   } else {
     allowedDomains.push("slack.com");
+    allowedDomains.push("api.slack.com");
   }
   // Add deno.land to allow uncached remote deps
   allowedDomains.push("deno.land");
