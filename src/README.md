@@ -105,5 +105,5 @@ deno task coverage
 ### Getting Help
 
 We welcome contributions from everyone! Please check out our
-[Contributor's Guide](https://github.com/slackapi/deno-slack-hooks/blob/main/.github/CONTRIBUTING.md)
+[Contributor's Guide](https://github.com/slackapi/deno-slack-runtime/blob/main/.github/CONTRIBUTING.md)
 for how to contribute in a helpful and collaborative way.
