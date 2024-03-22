@@ -25,19 +25,53 @@ export const run = async function (functionDir: string, input: string) {
     error: console.error,
     respond: () => {},
   };
-  // For the hosted runtime, we only support js files named w/ the callback_id
-  // They should already be bundled into single files as part of the package uploaded
-  // See the deno-slack-hooks repo for how the bundling and package is done
+
+  // [@mniemer prototype for non-bundled executable]
+  // This change is paired with another change in deno-slack-hooks build.ts script
+  // which copies src files and vendors deps instead of bundling.
+  // We keep source_file as an attribute in generated manifest so they can be located here.
+  const manifest = await readManifestJSONFile();
   const resp = await DispatchPayload(
     payload,
     hookCLI,
     (functionCallbackId) => {
-      return `${functionDir}/${functionCallbackId}.js`;
+      const functionDefn = manifest.functions[functionCallbackId];
+      if (!functionDefn) {
+        throw new Error(
+          `No function definition for function callback id ${functionCallbackId} was found in the manifest! manifest.functions: ${manifest.functions}`,
+        );
+      }
+
+      return `file://${Deno.realPathSync(functionDefn.source_file)}`;
     },
   );
 
   return resp || {};
 };
+
+async function readManifestJSONFile() {
+  // Look for manifest.json in working directory
+  // deno-lint-ignore no-explicit-any
+  let manifestJSON: any = {};
+  try {
+    const { isFile } = await Deno.stat("manifest.json");
+
+    if (!isFile) {
+      return false;
+    }
+  } catch (_e) {
+    return false;
+  }
+
+  try {
+    const jsonString = await Deno.readTextFile("manifest.json");
+    manifestJSON = JSON.parse(jsonString);
+  } catch (err) {
+    throw err;
+  }
+
+  return manifestJSON;
+}
 
 // Start a http server that listens on the provided port
 // This server exposes two routes
