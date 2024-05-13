@@ -1,5 +1,7 @@
 # deno-slack-runtime
 
+[![codecov](https://codecov.io/gh/slackapi/deno-slack-runtime/graph/badge.svg?token=D7U34ERPH0)](https://codecov.io/gh/slackapi/deno-slack-runtime)
+
 Helper library for running a Run on Slack Deno function. The goal of this
 project is to provide modules for:
 

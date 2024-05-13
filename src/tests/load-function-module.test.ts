@@ -45,7 +45,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
         );
       },
       TypeError,
-      "[ERROR]",
+      "could not be parsed",
     );
   });
 
