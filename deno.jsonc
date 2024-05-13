@@ -2,7 +2,8 @@
   "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
   "fmt": {
     "files": {
-      "include": ["src", "docs", "README.md"]
+      "include": ["src", "docs", "README.md"],
+      "exclude": ["src/tests/fixtures"]
     },
     "options": {
       "semiColons": true,
@@ -15,7 +16,8 @@
   },
   "lint": {
     "files": {
-      "include": ["src"]
+      "include": ["src"],
+      "exclude": ["src/tests/fixtures"]
     },
     "rules": {
       // [TODO]: Remove exclusion after we remove Deno.run
