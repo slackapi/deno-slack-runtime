@@ -40,7 +40,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Report health score
-        uses: slackapi/slack-health-score@v0.0.2
+        uses: slackapi/slack-health-score@v0
         with:
           codecov_token: ${{ secrets.FILS_CODECOV_API_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
