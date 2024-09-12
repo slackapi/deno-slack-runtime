@@ -18,8 +18,6 @@ const fakeManifest = (...domains: string[]) => {
   };
 };
 
-const FAKE_DENO_PATH = "/path/to/deno";
-
 const FAKE_DENO_LAND_MODULE =
   "https://deno.land/x/deno_slack_runtime@0.3.0/local-run.ts";
 const FAKE_DENO_LAND_EXPECTED_MODULE =
@@ -31,13 +29,11 @@ Deno.test("getCommandline function", async (t) => {
   await t.step("issues right command no dev domain", () => {
     const command = getCommandline(
       FAKE_DENO_LAND_MODULE,
-      FAKE_DENO_PATH,
       fakeManifest("example.com"),
       "",
       MockProtocol(),
     );
     assertEquals(command, [
-      FAKE_DENO_PATH,
       "run",
       "-q",
       "--config=deno.jsonc",
@@ -51,13 +47,11 @@ Deno.test("getCommandline function", async (t) => {
   await t.step("issues right command with dev domain", () => {
     const command = getCommandline(
       FAKE_DENO_LAND_MODULE,
-      FAKE_DENO_PATH,
       fakeManifest("example.com"),
       "dev1234.slack.com",
       MockProtocol(),
     );
     assertEquals(command, [
-      FAKE_DENO_PATH,
       "run",
       "-q",
       "--config=deno.jsonc",
@@ -72,13 +66,11 @@ Deno.test("getCommandline function", async (t) => {
   await t.step("issues right command with no outgoing domains", () => {
     const command = getCommandline(
       FAKE_DENO_LAND_MODULE,
-      FAKE_DENO_PATH,
       fakeManifest(),
       "",
       MockProtocol(),
     );
     assertEquals(command, [
-      FAKE_DENO_PATH,
       "run",
       "-q",
       "--config=deno.jsonc",
@@ -92,13 +84,11 @@ Deno.test("getCommandline function", async (t) => {
   await t.step("issues right command with a local file module", () => {
     const command = getCommandline(
       FAKE_FILE_MODULE,
-      FAKE_DENO_PATH,
       fakeManifest(),
       "",
       MockProtocol(),
     );
     assertEquals(command, [
-      FAKE_DENO_PATH,
       "run",
       "-q",
       "--config=deno.jsonc",
@@ -112,13 +102,11 @@ Deno.test("getCommandline function", async (t) => {
   await t.step("handles root paths", () => {
     const command = getCommandline(
       "file:///local-run.ts",
-      FAKE_DENO_PATH,
       fakeManifest("example.com"),
       "",
       MockProtocol(),
     );
     assertEquals(command, [
-      FAKE_DENO_PATH,
       "run",
       "-q",
       "--config=deno.jsonc",
@@ -134,13 +122,11 @@ Deno.test("getCommandline function", async (t) => {
     protocol.getCLIFlags = () => ["--mycustomflag"];
     const command = getCommandline(
       "file:///local-run.ts",
-      FAKE_DENO_PATH,
       fakeManifest("example.com"),
       "",
       protocol,
     );
     assertEquals(command, [
-      FAKE_DENO_PATH,
       "run",
       "-q",
       "--config=deno.jsonc",
@@ -188,22 +174,22 @@ Deno.test("runWithOutgoingDomains function", async (t) => {
       const execPathSpy = mock.stub(Deno, "execPath", () => {
         throw new Error("no idea where that is");
       });
-      const runStub = mock.stub(
+      const commandStub = mock.stub(
         Deno,
-        "run",
+        "Command",
         () => ({
-          status: () =>
-            Promise.resolve({
-              success: true,
-              code: 0,
-            }),
-        } as unknown as Deno.Process<Deno.RunOptions>),
+          spawn: () => {
+            return {
+              status: Promise.resolve({ success: true, code: 0 }),
+            } as unknown as Deno.ChildProcess;
+          },
+        } as Deno.Command),
       );
       try {
         await runWithOutgoingDomains(createEmptyManifest, "", protocol);
       } finally {
         execPathSpy.restore();
-        runStub.restore();
+        commandStub.restore();
       }
       mock.assertSpyCallArg(
         errorSpy,
@@ -230,21 +216,21 @@ Deno.test("runWithOutgoingDomains function", async (t) => {
         exitSpy as unknown as () => never,
       );
       const exitCode = 1337;
-      const runStub = mock.stub(
+      const commandStub = mock.stub(
         Deno,
-        "run",
+        "Command",
         () => ({
-          status: () =>
-            Promise.resolve({
-              success: false,
-              code: exitCode,
-            }),
-        } as unknown as Deno.Process<Deno.RunOptions>),
+          spawn: () => {
+            return {
+              status: Promise.resolve({ success: false, code: exitCode }),
+            } as unknown as Deno.ChildProcess;
+          },
+        } as Deno.Command),
       );
       try {
         await runWithOutgoingDomains(createEmptyManifest, "", protocol);
       } finally {
-        runStub.restore();
+        commandStub.restore();
         exitStub.restore();
       }
       mock.assertSpyCallArg(

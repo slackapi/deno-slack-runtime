@@ -50,14 +50,12 @@ const findRelativeFile = (
  */
 export const getCommandline = function (
   mainModule: string,
-  denoExecutablePath: string,
   // deno-lint-ignore no-explicit-any
   manifest: any,
   devDomain: string,
   hookCLI: Protocol,
 ): string[] {
   const command = [
-    denoExecutablePath,
     "run",
     "-q",
     "--config=deno.jsonc",
@@ -123,15 +121,18 @@ export const runWithOutgoingDomains = async function (
 
   const command = getCommandline(
     Deno.mainModule,
-    denoExecutablePath,
     manifest,
     devDomain,
     hookCLI,
   );
 
-  const p = Deno.run({ cmd: command });
+  const commander = new Deno.Command(denoExecutablePath, {
+    args: command,
+  });
 
-  const status = await p.status();
+  const subprocess = commander.spawn();
+  const status = await subprocess.status;
+
   if (!status.success) {
     Deno.exit(status.code);
   }
