@@ -1,14 +1,14 @@
 import { InvocationPayload } from "./types.ts";
+import { readAll } from "./deps.ts";
 
 // Inject the readAll method dependency for easier testing
 export const ParsePayload = async (
-  // deno-lint-ignore no-explicit-any
-  readAll: (input: any) => Promise<ArrayBuffer>,
+  readStdin: typeof readAll,
 ): Promise<
   // deno-lint-ignore no-explicit-any
   InvocationPayload<any>
 > => {
-  const stdinContent = await readAll(Deno.stdin);
+  const stdinContent = await readStdin(Deno.stdin);
   const stdin = new TextDecoder().decode(stdinContent);
 
   try {
@@ -17,6 +17,9 @@ export const ParsePayload = async (
 
     return payload;
   } catch (e) {
-    throw new Error("Error parsing function invocation payload", e);
+    if (e instanceof Error) {
+      throw new Error("Error parsing function invocation payload", e);
+    }
+    throw new Error("Error parsing function invocation payload");
   }
 };

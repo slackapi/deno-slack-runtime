@@ -4,7 +4,6 @@ import {
   assertMatch,
   assertRejects,
   mock,
-  mockFetch,
   MockProtocol,
   Spy,
 } from "../dev_deps.ts";
@@ -121,7 +120,6 @@ Deno.test("DispatchPayload with userland handler module loading", async (t) => {
   const fixturesDir = `${__dirname}/fixtures`;
   Deno.chdir(fixturesDir);
   const functionsDir = `${fixturesDir}/functions`;
-  mockFetch.install(); // mock out calls to fetch
 
   await t.step(
     "should throw if handler module file is not not found",
@@ -144,12 +142,9 @@ Deno.test("DispatchPayload with userland handler module loading", async (t) => {
     },
   );
   Deno.chdir(origDir);
-  mockFetch.uninstall();
 });
 
 Deno.test("DispatchPayload with unhandled events", async (t) => {
-  mockFetch.install();
-
   await t.step("calls unhandledEvent with no default handler", async () => {
     const payload = generateFunctionExecutedPayload("my_func");
 
@@ -176,10 +171,17 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
   await t.step(
     "does not call unhandledEvent with default handler",
     async () => {
-      mockFetch.mock(
-        "POST@/api/functions.completeSuccess",
-        (_: Request) => {
-          return new Response('{"ok":true}');
+      using _stubFetch = mock.stub(
+        globalThis,
+        "fetch",
+        (url: string | URL | Request, options?: RequestInit) => {
+          const req = url instanceof Request ? url : new Request(url, options);
+          assertEquals(req.method, "POST");
+          assertEquals(
+            req.url,
+            "https://slack.com/api/functions.completeSuccess",
+          );
+          return Promise.resolve(new Response('{"ok":true}'));
         },
       );
       const payload = generateFunctionExecutedPayload("my_func");
@@ -489,8 +491,6 @@ Deno.test("DispatchPayload with unhandled events", async (t) => {
       );
     },
   );
-
-  mockFetch.uninstall();
 });
 
 Deno.test("DispatchPayload custom error handling", async (t) => {

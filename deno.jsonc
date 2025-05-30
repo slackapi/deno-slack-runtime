@@ -1,28 +1,18 @@
 {
-  "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
+  "$schema": "https://raw.githubusercontent.com/denoland/deno/refs/heads/main/cli/schemas/config-file.v1.json",
   "fmt": {
-    "files": {
-      "include": ["src", "docs", "README.md"],
-      "exclude": ["src/tests/fixtures"]
-    },
-    "options": {
-      "semiColons": true,
-      "indentWidth": 2,
-      "lineWidth": 80,
-      "proseWrap": "always",
-      "singleQuote": false,
-      "useTabs": false
-    }
+    "include": ["src", "docs", "README.md"],
+    "exclude": ["src/tests/fixtures"],
+    "semiColons": true,
+    "indentWidth": 2,
+    "lineWidth": 80,
+    "proseWrap": "always",
+    "singleQuote": false,
+    "useTabs": false
   },
   "lint": {
-    "files": {
-      "include": ["src"],
-      "exclude": ["src/tests/fixtures"]
-    },
-    "rules": {
-      // [TODO]: Remove exclusion after we remove Deno.run
-      "exclude": ["no-deprecated-deno-api"]
-    }
+    "include": ["src"],
+    "exclude": ["src/tests/fixtures"]
   },
   "lock": false,
   "tasks": {
@@ -31,8 +21,6 @@
     "test:coverage": "deno task generate-lcov && deno coverage --exclude=fixtures --exclude=test .coverage"
   },
   "test": {
-    "files": {
-      "include": ["src"]
-    }
+    "include": ["src"]
   }
 }

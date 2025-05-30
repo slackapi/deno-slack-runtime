@@ -5,19 +5,20 @@ import {
   MockProtocol,
   Spy,
 } from "../dev_deps.ts";
-import { mockFetch } from "../dev_deps.ts";
 import { RunFunction } from "../run-function.ts";
 import { extractBaseHandlerArgsFromPayload } from "../dispatch-payload.ts";
 import { FAKE_ID, generateFunctionExecutedPayload } from "./test_utils.ts";
 
 Deno.test("RunFunction function", async (t) => {
-  mockFetch.install(); // mock out calls to fetch
   await t.step(
     "should call completeError API if function fails to complete",
     async () => {
-      mockFetch.mock(
-        "POST@/api/functions.completeError",
-        async (req: Request) => {
+      using _stubFetch = mock.stub(
+        globalThis,
+        "fetch",
+        async (url: string | URL | Request, options?: RequestInit) => {
+          const req = url instanceof Request ? url : new Request(url, options);
+          assertEquals(req.method, "POST");
           assertEquals(
             req.url,
             "https://slack.com/api/functions.completeError",
@@ -54,9 +55,12 @@ Deno.test("RunFunction function", async (t) => {
       );
       const outputs = { super: "dope" };
 
-      mockFetch.mock(
-        "POST@/api/functions.completeSuccess",
-        async (req: Request) => {
+      using _stubFetch = mock.stub(
+        globalThis,
+        "fetch",
+        async (url: string | URL | Request, options?: RequestInit) => {
+          const req = url instanceof Request ? url : new Request(url, options);
+          assertEquals(req.method, "POST");
           assertEquals(
             req.url,
             "https://slack.com/api/functions.completeSuccess",
@@ -89,10 +93,19 @@ Deno.test("RunFunction function", async (t) => {
     await tt.step(
       "should log both request and response payloads to completeError if function fails to complete",
       async () => {
-        mockFetch.mock(
-          "POST@/api/functions.completeError",
-          (_: Request) => {
-            return new Response('{"ok":true}');
+        using _stubFetch = mock.stub(
+          globalThis,
+          "fetch",
+          (url: string | URL | Request, options?: RequestInit) => {
+            const req = url instanceof Request
+              ? url
+              : new Request(url, options);
+            assertEquals(req.method, "POST");
+            assertEquals(
+              req.url,
+              "https://slack.com/api/functions.completeError",
+            );
+            return Promise.resolve(new Response('{"ok":true}'));
           },
         );
 
@@ -127,10 +140,19 @@ Deno.test("RunFunction function", async (t) => {
     await tt.step(
       "should log both request and response payloads to completeSuccess if function completes successfully",
       async () => {
-        mockFetch.mock(
-          "POST@/api/functions.completeSuccess",
-          (_: Request) => {
-            return new Response('{"ok":true}');
+        using _stubFetch = mock.stub(
+          globalThis,
+          "fetch",
+          (url: string | URL | Request, options?: RequestInit) => {
+            const req = url instanceof Request
+              ? url
+              : new Request(url, options);
+            assertEquals(req.method, "POST");
+            assertEquals(
+              req.url,
+              "https://slack.com/api/functions.completeSuccess",
+            );
+            return Promise.resolve(new Response('{"ok":true}'));
           },
         );
 
@@ -163,6 +185,4 @@ Deno.test("RunFunction function", async (t) => {
       },
     );
   });
-
-  mockFetch.uninstall();
 });
