@@ -57,7 +57,9 @@ const startServer = async function (port: number) {
   }
 
   async function serveHttp(conn: Deno.Conn) {
-    // This "upgrades" a network connection into an HTTP connection.
+    // TODO: we should move to `Deno.serve` once it is stable instead of `Deno.serveHttp()` https://docs.deno.com/runtime/reference/migration_guide/
+    // @ts-ignore `Deno.serveHttp()` is soft-removed as of Deno 2.
+    // deno-lint-ignore no-deprecated-deno-api
     const httpConn = Deno.serveHttp(conn);
     // Each request sent over the HTTP connection will be yielded as an async
     // iterator from the HTTP connection.
