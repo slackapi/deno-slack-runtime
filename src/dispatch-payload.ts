@@ -102,7 +102,7 @@ export const DispatchPayload = async (
 };
 
 // deno-lint-ignore no-explicit-any
-function isAllowNetError(e: any): boolean {
+function isAllowNetError(e: any): e is Error {
   return e?.name === "PermissionDenied" &&
     typeof e?.message === "string" &&
     e?.message.includes("--allow-net");

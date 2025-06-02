@@ -31,6 +31,11 @@ export const hasUnhandledEventHandler = (functionModule: FunctionModule) => {
     functionModule.default?.unhandledEvent);
 };
 
-export const isUnhandledEventError = (error: Error) => {
-  return error.name === UNHANDLED_EVENT_ERROR;
-};
+export function isUnhandledEventError(
+  error: unknown,
+): error is UnhandledEventError {
+  if (error instanceof Error) {
+    return error.name === UNHANDLED_EVENT_ERROR;
+  }
+  return false;
+}
