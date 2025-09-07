@@ -1,5 +1,5 @@
 import {
-  createManifest,
+  getManifest,
   getProtocolInterface,
   Protocol,
   readAll,
@@ -11,18 +11,14 @@ import { DispatchPayload } from "./dispatch-payload.ts";
  * @description Runs an application function locally by dispatching a payload to it after loading it.
  */
 export const runLocally = async function (
-  create: typeof createManifest,
+  create: typeof getManifest,
   parse: typeof ParsePayload,
   readStdin: typeof readAll,
   dispatch: typeof DispatchPayload,
   hookCLI: Protocol,
 ): Promise<void> {
   const workingDirectory = Deno.cwd();
-  const manifest = await create({
-    manifestOnly: true,
-    log: () => {},
-    workingDirectory,
-  });
+  const manifest = await create(workingDirectory);
   if (!manifest.functions) {
     throw new Error(
       `No function definitions were found in the manifest! manifest.functions: ${manifest.functions}`,
@@ -53,7 +49,7 @@ export const runLocally = async function (
 if (import.meta.main) {
   const hookCLI = getProtocolInterface(Deno.args);
   await runLocally(
-    createManifest,
+    getManifest,
     ParsePayload,
     readAll,
     DispatchPayload,

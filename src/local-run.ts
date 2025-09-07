@@ -1,5 +1,5 @@
 import {
-  createManifest,
+  getManifest,
   getProtocolInterface,
   parse,
   Protocol,
@@ -95,16 +95,12 @@ export const getCommandline = function (
  * @description Runs an application locally by calling `deno run` with appropriate flags.
  */
 export const runWithOutgoingDomains = async function (
-  create: typeof createManifest,
+  create: typeof getManifest,
   devDomain: string,
   hookCLI: Protocol,
 ): Promise<void> {
   const workingDirectory = Deno.cwd();
-  const manifest = await create({
-    manifestOnly: true,
-    log: () => {},
-    workingDirectory,
-  });
+  const manifest = await create(workingDirectory);
 
   if (!manifest.functions) {
     throw new Error(
@@ -141,7 +137,7 @@ export const runWithOutgoingDomains = async function (
 if (import.meta.main) {
   const hookCLI = getProtocolInterface(Deno.args);
   await runWithOutgoingDomains(
-    createManifest,
+    getManifest,
     parseDevDomain(Deno.args),
     hookCLI,
   );
