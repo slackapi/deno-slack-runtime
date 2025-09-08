@@ -1,9 +1,4 @@
-import {
-  getManifest,
-  getProtocolInterface,
-  parse,
-  Protocol,
-} from "./deps.ts";
+import { getManifest, getProtocolInterface, parse, Protocol } from "./deps.ts";
 
 const SLACK_DEV_DOMAIN_FLAG = "sdk-slack-dev-domain";
 
