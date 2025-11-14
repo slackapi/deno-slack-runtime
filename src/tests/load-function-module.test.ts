@@ -1,7 +1,13 @@
-import { assertEquals, assertExists, assertRejects } from "../dev_deps.ts";
+import {
+  assertEquals,
+  assertExists,
+  assertRejects,
+  semver,
+} from "../dev_deps.ts";
 import { LoadFunctionModule } from "../load-function-module.ts";
 
 Deno.test("LoadFunctionModule function", async (t) => {
+  const parsedDenoVersion = semver.parse(Deno.version.deno);
   const origDir = Deno.cwd();
   const __dirname = new URL(".", import.meta.url).pathname;
   const fixturesDir = `${__dirname}/fixtures`;
@@ -52,6 +58,10 @@ Deno.test("LoadFunctionModule function", async (t) => {
   await t.step(
     "should throw if function has a wrong import path (e.g. bad or missing import map)",
     async () => {
+      const expectedMsgIncludes = parsedDenoVersion.major === 1
+        ? "not prefixed"
+        : "not a dependency";
+
       await assertRejects(
         async () => {
           return await LoadFunctionModule(
@@ -59,7 +69,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
           );
         },
         Error,
-        "not prefixed",
+        expectedMsgIncludes,
       );
     },
   );
