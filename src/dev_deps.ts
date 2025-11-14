@@ -6,7 +6,8 @@ export {
   assertStringIncludes,
   assertThrows,
   fail,
-} from "https://deno.land/std@0.224.0/testing/asserts.ts";
-export * as mock from "https://deno.land/std@0.224.0/testing/mock.ts";
-export type { Spy } from "https://deno.land/std@0.224.0/testing/mock.ts";
+} from "jsr:@std/assert@1.0.15";
+export * as mock from "jsr:@std/testing@1.0.16/mock";
+export type { Spy } from "jsr:@std/testing@1.0.16/mock";
 export { MockProtocol } from "https://deno.land/x/deno_slack_protocols@0.0.2/mock.ts";
+export * as semver from "jsr:@std/semver@1.0.6";
