@@ -2,12 +2,12 @@ import {
   ConsoleLogger,
   getManifest,
   getProtocolInterface,
+  type Logger,
   LogLevel,
   Protocol,
   SocketModeClient,
-  type Logger,
 } from "./deps.ts";
-import { DispatchPayload } from "./dispatch-payload.ts";
+import { getCommandline } from "./local-run.ts";
 import type { InvocationPayload } from "./types.ts";
 
 export interface SocketModeRunOptions {
@@ -18,12 +18,10 @@ export interface SocketModeRunOptions {
 }
 
 /**
- * @description Runs an application in Socket Mode by establishing a WebSocket
- * connection to Slack and listening for function_executed events continuously.
+ * @description Runs a Slack workflow app in Socket Mode by establishing a WebSocket connection to Slack.
  */
 export const runWithSocketMode = async function (
   create: typeof getManifest,
-  dispatch: typeof DispatchPayload,
   hookCLI: Protocol,
   options: SocketModeRunOptions,
 ): Promise<void> {
@@ -41,10 +39,28 @@ export const runWithSocketMode = async function (
   const manifest = await create(workingDirectory);
 
   if (!manifest.functions) {
-    logger.warn(
-      `No function definitions found in the manifest: ${manifest.functions}`,
+    logger.error(
+      `No function definitions found in the manifest`,
+    );
+    throw new Error(
+      `No function definitions found in the manifest`,
     );
   }
+
+  // Reuse local-run.ts's command line so that the function runs in a subprocess with --allow-net restricted to manifest.outgoing_domains
+  const devDomain = slackApiUrl ? new URL(slackApiUrl).hostname : "";
+  let denoExecutablePath = "deno";
+  try {
+    denoExecutablePath = Deno.execPath();
+  } catch (e) {
+    logger.warn("Could not get Deno executable path, using 'deno'", e);
+  }
+  const subprocessCommand = getCommandline(
+    Deno.mainModule,
+    manifest,
+    devDomain,
+    hookCLI,
+  );
 
   // Create Socket Mode client with optional dev instance support
   const clientOptions = slackApiUrl ? { slackApiUrl } : undefined;
@@ -69,45 +85,63 @@ export const runWithSocketMode = async function (
 
     try {
       // Convert the Socket Mode event into an InvocationPayload format
-      // that the existing dispatch-payload system expects
+      // that local-run-function.ts expects on stdin
       // deno-lint-ignore no-explicit-any
       const payload: InvocationPayload<any> = {
         body,
         context: {
-          bot_access_token: body.event?.bot_access_token || body.bot_access_token || "",
+          bot_access_token: body.event?.bot_access_token ||
+            body.bot_access_token || "",
           team_id: body.team_id || "",
           variables: Deno.env.toObject(),
         },
       };
 
       // Add retry information if present
-      if (retry_num !== undefined) {
-        logger.warn(`Retrying event (attempt ${retry_num})${retry_reason ? `: ${retry_reason}` : ""}`);
+      if (retry_num !== undefined && retry_num > 0) {
+        logger.warn(
+          `Retrying event (attempt ${retry_num})${
+            retry_reason ? `: ${retry_reason}` : ""
+          }`,
+        );
       }
 
-      // Dispatch the payload to the appropriate function handler
-      const resp = await dispatch(payload, hookCLI, (functionCallbackId) => {
-        const functionDefn = manifest.functions[functionCallbackId];
-        if (!functionDefn) {
-          throw new Error(
-            `No function definition for function callback id ${functionCallbackId} was found in the manifest! manifest.functions: ${
-              Object.keys(manifest.functions).join(", ")
-            }`,
-          );
-        }
-
-        const functionFile = `file://${workingDirectory}/${functionDefn.source_file}`;
-        logger.debug(`Loading function from: ${functionFile}`);
-        return functionFile;
+      // Run the function in a subprocess with the same --allow-net restriction as local-run.ts (manifest.outgoing_domains)
+      const commander = new Deno.Command(denoExecutablePath, {
+        args: subprocessCommand,
+        stdin: "piped",
+        stdout: "piped",
+        stderr: "piped",
+        cwd: workingDirectory,
       });
+      const subprocess = commander.spawn();
+      const payloadJson = JSON.stringify(payload);
+      const writer = subprocess.stdin.getWriter();
+      await writer.write(new TextEncoder().encode(payloadJson));
+      await writer.close();
 
-      // Acknowledge the event with optional response payload
-      await ack(resp || {});
+      const output = await subprocess.output();
+      const stdout = new TextDecoder().decode(output.stdout).trim();
+      const stderr = new TextDecoder().decode(output.stderr);
+
+      if (!output.success) {
+        logger.error(
+          `Function subprocess failed (exit code ${output.code}). stderr: ${
+            stderr || "(none)"
+          }`,
+        );
+        await ack();
+        return;
+      }
+
+      if (stdout) {
+        logger.info(`Function response: ${stdout}`);
+      }
+
+      await ack({});
       logger.debug("Event processed and acknowledged");
     } catch (error) {
       logger.error("Error processing event:", error);
-      // Still acknowledge to prevent retries for unrecoverable errors
-      // You might want to customize this behavior based on error type
       await ack();
     }
   });
@@ -131,7 +165,12 @@ export const runWithSocketMode = async function (
 
   // Start the Socket Mode connection
   logger.info("🚀 Starting Socket Mode client...");
-  await client.start();
+  try {
+    await client.start();
+  } catch (error) {
+    logger.error("Failed to start Socket Mode client:", error);
+    throw error;
+  }
   logger.info("⚡️ Socket Mode runtime is running and listening for events");
 
   // Keep the process running
@@ -163,21 +202,25 @@ if (import.meta.main) {
 
   // Parse log level from environment
   const logLevelStr = Deno.env.get("SLACK_LOG_LEVEL") || "INFO";
-  const logLevel = LogLevel[logLevelStr as keyof typeof LogLevel] || LogLevel.INFO;
+  const logLevel = LogLevel[logLevelStr as keyof typeof LogLevel] ||
+    LogLevel.INFO;
 
   // Support for dev Slack instances
   const slackApiUrl = Deno.env.get("SLACK_API_URL");
 
   const hookCLI = getProtocolInterface(Deno.args);
 
-  await runWithSocketMode(
-    getManifest,
-    DispatchPayload,
-    hookCLI,
-    {
-      appToken,
-      logLevel,
-      slackApiUrl,
-    },
-  );
+  try {
+    await runWithSocketMode(
+      getManifest,
+      hookCLI,
+      {
+        appToken,
+        logLevel,
+        slackApiUrl,
+      },
+    );
+  } catch {
+    Deno.exit(1);
+  }
 }

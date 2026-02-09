@@ -23,6 +23,20 @@ export interface HTTPReceiverOptions {
 }
 
 /**
+ * Prompts the user for the Request URL to set under settings.event_subscriptions
+ * in the app manifest. Call this before apps.manifest.validate so the user can set
+ * the URL in the manifest before validation runs.
+ * @returns The trimmed URL string, or null if the user skipped (Enter with no input).
+ */
+export function promptRequestUrlForEventSubscriptions(): string | null {
+  const raw = prompt(
+    "Request URL to set under settings.event_subscriptions in your app manifest (optional; press Enter to skip):",
+  );
+  const url = raw?.trim() ?? null;
+  return url === "" ? null : url;
+}
+
+/**
  * Constant-time string comparison to mitigate timing attacks (aligned with bolt-js verify-request).
  */
 function timingSafeEqual(a: string, b: string): boolean {
@@ -94,6 +108,23 @@ async function verifySlackRequest(
 }
 
 /**
+ * Parse event endpoint body like bolt-js HTTPModuleFunctions.parseHTTPRequestBody:
+ * application/x-www-form-urlencoded with a "payload" field, or raw JSON.
+ */
+// deno-lint-ignore no-explicit-any
+function parseEventRequestBody(bodyText: string, contentType: string | null): any {
+  if (contentType?.includes("application/x-www-form-urlencoded")) {
+    const params = new URLSearchParams(bodyText);
+    const payload = params.get("payload");
+    if (typeof payload === "string") {
+      return JSON.parse(payload);
+    }
+    return Object.fromEntries(params);
+  }
+  return JSON.parse(bodyText);
+}
+
+/**
  * Runs the app as an HTTP server that accepts Slack events via POST to the
  * configured endpoints. Request handling (verify → parse → ssl_check →
  * url_verification → event dispatch) is aligned with Bolt for JavaScript
@@ -148,11 +179,55 @@ export const runWithHTTPReceiver = async function (
 
     // Health check endpoint
     if (request.method === "GET" && pathname === "/health") {
+      // TODO: remove
+      hookCLI.log(`[info] ${request.method} ${pathname} called`);
       return new Response("OK", { status: 200 });
+    }
+
+    // POST /functions — raw invocation payload (no signature verification), same as mod.ts
+    if (request.method === "POST" && pathname === "/functions") {
+      // TODO: remove
+      hookCLI.log(`[info] ${request.method} ${pathname} called`);
+      try {
+        const body = await request.text();
+        // deno-lint-ignore no-explicit-any
+        const payload: InvocationPayload<any> = JSON.parse(body);
+        const resp = await dispatch(payload, hookCLI, (functionCallbackId) => {
+          const functionDefn = manifest.functions[functionCallbackId];
+          if (!functionDefn) {
+            throw new Error(
+              `No function definition for function callback id ${functionCallbackId} was found in the manifest! manifest.functions: ${
+                Object.keys(manifest.functions).join(", ")
+              }`,
+            );
+          }
+          const functionFile =
+            `file://${workingDirectory}/${functionDefn.source_file}`;
+          return functionFile;
+        });
+        return new Response(JSON.stringify(resp ?? {}), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch (error) {
+        hookCLI.error("❌ Error processing /functions request:", error);
+        if (error instanceof Error && error.stack) {
+          hookCLI.error(error.stack);
+        }
+        return new Response(
+          JSON.stringify({ error: String(error) }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
     }
 
     // Event endpoints
     if (request.method === "POST" && eventEndpoints.includes(pathname)) {
+      // TODO: remove
+      hookCLI.log(`[info] ${request.method} ${pathname} called`);
       try {
         const body = await request.text();
 
@@ -169,9 +244,11 @@ export const runWithHTTPReceiver = async function (
           }
         }
 
-        // Parse the body
-        // deno-lint-ignore no-explicit-any
-        const parsedBody: any = JSON.parse(body);
+        // Parse the body (JSON or form-encoded with payload= like bolt-js)
+        const parsedBody = parseEventRequestBody(
+          body,
+          request.headers.get("content-type"),
+        );
 
         // Log incoming event
         const eventType = parsedBody.type || parsedBody.event?.type ||
@@ -179,16 +256,15 @@ export const runWithHTTPReceiver = async function (
         const eventId = parsedBody.event_id || "no-id";
         hookCLI.log(`📨 Received event: ${eventType} (${eventId})`);
 
-        // Handle URL verification challenge
+        // Handle URL verification challenge (response format matches bolt-js
+        // HTTPReceiver buildUrlVerificationResponse)
         if (parsedBody.type === "url_verification") {
           hookCLI.log("✅ Responding to URL verification challenge");
-          return new Response(
-            JSON.stringify({ challenge: parsedBody.challenge }),
-            {
-              status: 200,
-              headers: { "Content-Type": "application/json" },
-            },
-          );
+          const challenge = parsedBody.challenge;
+          return new Response(JSON.stringify({ challenge }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
         }
 
         // Handle SSL check
@@ -281,12 +357,15 @@ export const runWithHTTPReceiver = async function (
     }
 
     // 404 for unknown routes
+    // TODO: remove
+    hookCLI.log(`[info] ${request.method} ${pathname} — not found (404)`);
     return new Response("Not Found", { status: 404 });
   };
 
   // Start the server
   hookCLI.log(`🚀 Starting HTTP server on port ${port}`);
   hookCLI.log(`📡 Event endpoints: ${eventEndpoints.join(", ")}`);
+  hookCLI.log(`📮 Invocation endpoint: POST /functions`);
   hookCLI.log(`🏥 Health check: /health`);
 
   const server = Deno.serve({
@@ -344,6 +423,18 @@ if (import.meta.main) {
   const slackApiUrl = Deno.env.get("SLACK_API_URL");
 
   const hookCLI = getProtocolInterface(Deno.args);
+
+  // Prompt for the Request URL before any manifest validate; caller can set it in manifest then validate
+  const requestUrl = promptRequestUrlForEventSubscriptions();
+  if (requestUrl) {
+    console.log(
+      `Set this Request URL in your app manifest under /settings/event_subscriptions: ${requestUrl}`,
+    );
+  } else {
+    console.log(
+      "Remember to set the Request URL under settings.event_subscriptions in your app manifest when using Event Subscriptions.",
+    );
+  }
 
   await runWithHTTPReceiver(
     getManifest,
