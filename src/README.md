@@ -10,7 +10,7 @@ project is to provide modules for:
 3. Dispatching event payloads to individual functions by callback ID and running
    them (`src/dispatch-payload.ts`)
 
-This library has four modes of operation:
+This library has multiple modes of operation:
 
 1. Using `mod.ts` as the entrypoint, a directory containing function code files
    to be loaded at runtime must be provided as an argument. This directory must
@@ -22,22 +22,19 @@ This library has four modes of operation:
    contain a `manifest.json`, `manifest.ts` or `manifest.js` file, which in turn
    must contain function definitions that include a `source_file` property. This
    property is used to determine which function to load and run at runtime.
-3. Using `self-hosted-socket-mode.ts` as the entrypoint. This establishes a persistent
-   WebSocket connection to Slack using Socket Mode and maintains a long-running process that listens for events.
-4. Using `self-hosted-http-mode.ts` as the entrypoint. This starts an HTTP server that
-   accepts events via POST requests to `/events` endpoints, similar to Bolt JS's
-   HTTPReceiver. The only required environment variable is
-   `SLACK_SIGNING_SECRET`; optional variables include `PORT`,
-   `SLACK_SIGNATURE_VERIFICATION`, and `SLACK_API_URL` (e.g.
-   `SLACK_SIGNING_SECRET=xxx PORT=3000 deno run src/self-hosted-http-mode.ts`).
+3. Using `self-hosted-socket-mode.ts` as the entrypoint. This establishes a
+   persistent WebSocket connection to Slack using Socket Mode and maintains a
+   long-running process that listens for `function_executed` events. It expects
+   a similar setup in the current working directory as the `local-run.ts`
+   entrypoint.
 
 Regardless of which mode of operation used, each runtime definition for a
 function is specified in its own file and must be the default export.
 
 ## Usage
 
-By default, your Slack app has a `.slack/hooks.json` file that defines a `get-hooks`
-hook. The Slack CLI will automatically use the version of the
+By default, your Slack app has a `.slack/hooks.json` file that defines a
+`get-hooks` hook. The Slack CLI will automatically use the version of the
 `deno-slack-runtime` that is specified by the version of the `get-hooks` script
 that you're using. To use this library via the Slack CLI out of the box, use the
 `slack run` command in your terminal. This will automatically run the `start`
@@ -70,8 +67,6 @@ operating this library in:
    `deno run -q --config=deno.jsonc --allow-read --allow-net https://deno.land/x/deno_slack_runtime@0.1.1/local-run.ts`
 3. Self-hosted socket mode:
    `deno run -q --config=deno.jsonc --allow-read --allow-net --allow-run --allow-env --allow-sys=osRelease https://deno.land/x/deno_slack_runtime@0.1.1/self-hosted-socket-mode.ts`
-4. Self-hosted HTTP Receiver:
-   `deno run -q --config=deno.jsonc --allow-read --allow-net --allow-env --allow-sys=osRelease https://deno.land/x/deno_slack_runtime@0.1.1/self-hosted-http-mode.ts`
 
 ⚠️ Don't forget to update the version specifier in the URL inside the above
 commands to match the version you want to test! You can also drop the `@` and

@@ -47,7 +47,6 @@ export const runWithSocketMode = async function (
     );
   }
 
-  // Reuse local-run.ts's command line so that the function runs in a subprocess with --allow-net restricted to manifest.outgoing_domains
   const devDomain = slackApiUrl ? new URL(slackApiUrl).hostname : "";
   let denoExecutablePath = "deno";
   try {
@@ -55,6 +54,7 @@ export const runWithSocketMode = async function (
   } catch (e) {
     logger.warn("Could not get Deno executable path, using 'deno'", e);
   }
+  // Run the function in a subprocess with restricted permissions
   const subprocessCommand = getCommandline(
     Deno.mainModule,
     manifest,
@@ -62,7 +62,6 @@ export const runWithSocketMode = async function (
     hookCLI,
   );
 
-  // Create Socket Mode client with optional dev instance support
   const clientOptions = slackApiUrl ? { slackApiUrl } : undefined;
   const client = new SocketModeClient({
     appToken,
@@ -72,27 +71,15 @@ export const runWithSocketMode = async function (
   });
 
   // Listen for incoming events
-  client.on("slack_event", async (args: {
-    // deno-lint-ignore no-explicit-any
-    body: any;
-    ack: (response?: Record<string, unknown>) => Promise<void>;
-    retry_num?: number;
-    retry_reason?: string;
-  }) => {
-    const { body, ack, retry_num, retry_reason } = args;
-
-    logger.debug("Received slack_event:", JSON.stringify(body, null, 2));
-
+  client.on("slack_event", async ({ body, ack, retry_num, retry_reason }) => {
+    logger.debug("Received event:", JSON.stringify(body, null, 2));
     try {
-      // Convert the Socket Mode event into an InvocationPayload format
-      // that local-run-function.ts expects on stdin
       // deno-lint-ignore no-explicit-any
       const payload: InvocationPayload<any> = {
         body,
         context: {
-          bot_access_token: body.event?.bot_access_token ||
-            body.bot_access_token || "",
-          team_id: body.team_id || "",
+          bot_access_token: body.event.bot_access_token,
+          team_id: body.team_id,
           variables: Deno.env.toObject(),
         },
       };
@@ -200,12 +187,10 @@ if (import.meta.main) {
     Deno.exit(1);
   }
 
-  // Parse log level from environment
   const logLevelStr = Deno.env.get("SLACK_LOG_LEVEL") || "INFO";
   const logLevel = LogLevel[logLevelStr as keyof typeof LogLevel] ||
     LogLevel.INFO;
 
-  // Support for dev Slack instances
   const slackApiUrl = Deno.env.get("SLACK_API_URL");
 
   const hookCLI = getProtocolInterface(Deno.args);
