@@ -145,7 +145,7 @@ Deno.test("parseDevDomain function", async (t) => {
     assertEquals(domain, "foo.com");
   });
 
-  Deno.test("parseDevDomain defaults to empty string", () => {
+  await t.step("parseDevDomain defaults to empty string", () => {
     const domain = parseDevDomain([]);
     assertEquals(domain, "");
   });
