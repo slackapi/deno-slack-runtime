@@ -277,8 +277,8 @@ deno task test:coverage
 | **deno-slack-runtime**                                                   | **Execution engine** | **This project** — loads and runs user functions                                 |
 
 The Slack CLI invokes this runtime via the `start` hook defined in the app's
-`.slack/hooks.json`. During local development, the hook points to `local-run.ts`. On
-deployed infrastructure, Slack invokes `mod.ts` directly.
+`.slack/hooks.json`. During local development, the hook points to
+`local-run.ts`. On deployed infrastructure, Slack invokes `mod.ts` directly.
 
 ## Common Tasks
 
