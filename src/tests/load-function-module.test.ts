@@ -44,6 +44,10 @@ Deno.test("LoadFunctionModule function", async (t) => {
   });
 
   await t.step("should throw if function contains syntax error", async () => {
+    const expectedMsgIncludes = parsedDenoVersion.major === 1
+      ? "could not be parsed"
+      : "SyntaxError";
+
     await assertRejects(
       async () => {
         return await LoadFunctionModule(
@@ -51,7 +55,7 @@ Deno.test("LoadFunctionModule function", async (t) => {
         );
       },
       TypeError,
-      "could not be parsed",
+      expectedMsgIncludes,
     );
   });
 
