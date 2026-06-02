@@ -1,26 +1,26 @@
 {
   "$schema": "https://raw.githubusercontent.com/denoland/deno/refs/heads/main/cli/schemas/config-file.v1.json",
   "fmt": {
-    "include": ["src", "docs", "README.md"],
+    "include": ["src", "docs", "README.md", "AGENTS.md"],
     "exclude": ["src/tests/fixtures"],
     "semiColons": true,
     "indentWidth": 2,
     "lineWidth": 80,
     "proseWrap": "always",
     "singleQuote": false,
-    "useTabs": false
+    "useTabs": false,
   },
   "lint": {
     "include": ["src"],
-    "exclude": ["src/tests/fixtures"]
+    "exclude": ["src/tests/fixtures"],
   },
   "lock": false,
   "tasks": {
     "test": "deno fmt --check && deno lint && deno test --allow-read",
     "generate-lcov": "rm -rf .coverage && deno test --reporter=dot --allow-read --coverage=.coverage && deno coverage --exclude=fixtures --exclude=test --lcov --output=lcov.info .coverage",
-    "test:coverage": "deno task generate-lcov && deno coverage --exclude=fixtures --exclude=test .coverage"
+    "test:coverage": "deno task generate-lcov && deno coverage --exclude=fixtures --exclude=test .coverage",
   },
   "test": {
-    "include": ["src"]
-  }
+    "include": ["src"],
+  },
 }
