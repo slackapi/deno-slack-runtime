@@ -5,3 +5,8 @@ export { getManifest } from "https://deno.land/x/deno_slack_hooks@1.4.0/get_mani
 export { parse } from "https://deno.land/std@0.99.0/flags/mod.ts";
 export { getProtocolInterface } from "https://deno.land/x/deno_slack_protocols@0.0.2/mod.ts";
 export type { Protocol } from "https://deno.land/x/deno_slack_protocols@0.0.2/types.ts";
+
+// Socket Mode dependencies (npm packages via Deno)
+export { SocketModeClient } from "npm:@slack/socket-mode@2.0.5";
+export { ConsoleLogger, LogLevel } from "npm:@slack/logger@4.0.0";
+export type { Logger } from "npm:@slack/logger@4.0.0";
